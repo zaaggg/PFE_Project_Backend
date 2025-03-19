@@ -1,11 +1,8 @@
 package com.PFE.DTT.controller;
 
-import com.PFE.DTT.model.ControlCriteria;
-import com.PFE.DTT.model.DepartmentType;
-import com.PFE.DTT.model.Protocol;
-import com.PFE.DTT.model.User;
-import com.PFE.DTT.repository.ControlCriteriaRepository;
-import com.PFE.DTT.repository.DepartmentTypeRepository;
+import com.PFE.DTT.model.*;
+import com.PFE.DTT.repository.SpecificControlCriteriaRepository;
+import com.PFE.DTT.repository.DepartmentRepository;
 import com.PFE.DTT.repository.ProtocolRepository;
 import com.PFE.DTT.repository.UserRepository;
 import com.PFE.DTT.security.JwtUtil;
@@ -18,16 +15,16 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/control-criteria")
-public class ControlCriteriaController {
+public class SpecificControlCriteriaController {
 
     @Autowired
-    private ControlCriteriaRepository controlCriteriaRepository;
+    private SpecificControlCriteriaRepository controlCriteriaRepository;
 
     @Autowired
     private ProtocolRepository protocolRepository;
 
     @Autowired
-    private DepartmentTypeRepository departmentTypeRepository;
+    private DepartmentRepository departmentRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -65,15 +62,15 @@ public class ControlCriteriaController {
         }
 
         // ✅ Find Department Types
-        Optional<DepartmentType> implementationResponsible = departmentTypeRepository.findById(requestBody.getImplementationResponsibleId());
-        Optional<DepartmentType> checkResponsible = departmentTypeRepository.findById(requestBody.getCheckResponsibleId());
+        Optional<Department> implementationResponsible = departmentRepository.findById(requestBody.getImplementationResponsibleId());
+        Optional<Department> checkResponsible = departmentRepository.findById(requestBody.getCheckResponsibleId());
 
         if (implementationResponsible.isEmpty() || checkResponsible.isEmpty()) {
             return ResponseEntity.badRequest().body("Invalid department type IDs.");
         }
 
         // ✅ Create and Save ControlCriteria
-        ControlCriteria controlCriteria = new ControlCriteria(
+        SpecificControlCriteria controlCriteria = new SpecificControlCriteria(
                 requestBody.getDescription(),
                 implementationResponsible.get(),
                 checkResponsible.get(),

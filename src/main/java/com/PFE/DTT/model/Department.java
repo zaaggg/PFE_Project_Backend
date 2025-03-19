@@ -10,20 +10,14 @@ public class Department {
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Ensures ID is just a number
     private int id;
 
-    @ManyToOne
-    @JoinColumn(name = "plant_id", nullable = false)
-    private Plant plant;
-
-    @ManyToOne
-    @JoinColumn(name = "department_type_id", nullable = false)
-    private DepartmentType departmentType;
+    @Column(nullable = false, unique = true)
+    private String name;
 
     // Constructors
     public Department() {}
 
-    public Department(Plant plant, DepartmentType departmentType) {
-        this.plant = plant;
-        this.departmentType = departmentType;
+    public Department(String name) {
+        this.name = name;
     }
 
     // Getters and Setters
@@ -31,19 +25,15 @@ public class Department {
         return id;
     }
 
-    public Plant getPlant() {
-        return plant;
+    public void setId(int id) {
+        this.id = id;
     }
 
-    public void setPlant(Plant plant) {
-        this.plant = plant;
+    public String getName() {
+        return name;
     }
 
-    public DepartmentType getDepartmentType() {
-        return departmentType;
-    }
-
-    public void setDepartmentType(DepartmentType departmentType) {
-        this.departmentType = departmentType;
+    public void setName(String name) {
+        this.name = name;
     }
 }

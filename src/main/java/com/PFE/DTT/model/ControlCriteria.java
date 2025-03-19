@@ -1,52 +1,40 @@
 package com.PFE.DTT.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.*;
 import java.util.Objects;
 
-@Entity
-public class ControlCriteria {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+/**
+ * Abstract base class representing a control criteria entity in the system.
+ * Defines common attributes for all control criteria types, including departments responsible for implementation and checking.
+ * Used as a MappedSuperclass to share fields with SpecificControlCriteria and StandardControlCriteria.
+ */
+@MappedSuperclass
+public abstract class ControlCriteria {
 
     @Column(nullable = false)
     private String description;
 
-    // Responsible Department Type for Implementation
     @ManyToOne
     @JoinColumn(name = "implementation_responsible", nullable = false)
-    private DepartmentType implementationResponsible;
+    private Department implementationResponsible;
 
-    // Responsible Department Type for Checking
     @ManyToOne
     @JoinColumn(name = "check_responsible", nullable = false)
-    private DepartmentType checkResponsible;
+    private Department checkResponsible;
 
-    // Each ControlCriteria belongs to one Protocol
-    @ManyToOne
-    @JoinColumn(name = "protocol_id", nullable = false)
-    private Protocol protocol;
+    // Default Constructor (JPA Requirement)
+    protected ControlCriteria() {}
 
-    // Constructors
-    public ControlCriteria() {}
-
-    public ControlCriteria(String description, DepartmentType implementationResponsible, DepartmentType checkResponsible, Protocol protocol) {
+    // Constructor
+    protected ControlCriteria(String description, Department implementationResponsible, Department checkResponsible) {
         this.description = description;
         this.implementationResponsible = implementationResponsible;
         this.checkResponsible = checkResponsible;
-        this.protocol = protocol;
     }
 
     // Getters and Setters
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
     public String getDescription() {
         return description;
     }
@@ -55,38 +43,28 @@ public class ControlCriteria {
         this.description = description;
     }
 
-    public DepartmentType getImplementationResponsible() {
+    public Department getImplementationResponsible() {
         return implementationResponsible;
     }
 
-    public void setImplementationResponsible(DepartmentType implementationResponsible) {
+    public void setImplementationResponsible(Department implementationResponsible) {
         this.implementationResponsible = implementationResponsible;
     }
 
-    public DepartmentType getCheckResponsible() {
+    public Department getCheckResponsible() {
         return checkResponsible;
     }
 
-    public void setCheckResponsible(DepartmentType checkResponsible) {
+    public void setCheckResponsible(Department checkResponsible) {
         this.checkResponsible = checkResponsible;
-    }
-
-    public Protocol getProtocol() {
-        return protocol;
-    }
-
-    public void setProtocol(Protocol protocol) {
-        this.protocol = protocol;
     }
 
     @Override
     public String toString() {
         return "ControlCriteria{" +
-                "id=" + id +
-                ", description='" + description + '\'' +
-                ", implementationResponsible=" + implementationResponsible.getName() +
-                ", checkResponsible=" + checkResponsible.getName() +
-                ", protocol=" + protocol.getName() +
+                "description='" + description + '\'' +
+                ", implementationResponsible=" + (implementationResponsible != null ? implementationResponsible.getId() : "null") +
+                ", checkResponsible=" + (checkResponsible != null ? checkResponsible.getId() : "null") +
                 '}';
     }
 
@@ -94,11 +72,13 @@ public class ControlCriteria {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof ControlCriteria that)) return false;
-        return id == that.id;
+        return Objects.equals(description, that.description) &&
+                Objects.equals(implementationResponsible, that.implementationResponsible) &&
+                Objects.equals(checkResponsible, that.checkResponsible);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(description, implementationResponsible, checkResponsible);
     }
 }

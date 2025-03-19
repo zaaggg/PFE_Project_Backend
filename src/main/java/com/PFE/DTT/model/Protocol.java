@@ -26,8 +26,8 @@ public class Protocol {
     private User createdBy;
 
     // Each Protocol can have many ControlCriteria
-    @OneToMany(mappedBy = "protocol", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<ControlCriteria> controlCriteriaList = new ArrayList<>();
+    @OneToMany(mappedBy = "protocol", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SpecificControlCriteria> specificControlCriteriaList = new ArrayList<>();
 
     // Constructors
     public Protocol() {}
@@ -71,12 +71,12 @@ public class Protocol {
         this.createdBy = createdBy;
     }
 
-    public List<ControlCriteria> getControlCriteriaList() {
-        return controlCriteriaList;
+    public List<SpecificControlCriteria> getSpecificControlCriteria() {
+        return this.specificControlCriteriaList;
     }
 
-    public void setControlCriteriaList(List<ControlCriteria> controlCriteriaList) {
-        this.controlCriteriaList = controlCriteriaList;
+    public void SpecificControlCriteriaList(List<SpecificControlCriteria> specificControlCriteriaList) {
+        this.specificControlCriteriaList = specificControlCriteriaList;
     }
 
     @Override

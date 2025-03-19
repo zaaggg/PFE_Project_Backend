@@ -1,9 +1,9 @@
 package com.PFE.DTT.repository;
 
-import com.PFE.DTT.model.ControlCriteria;
+import com.PFE.DTT.model.SpecificControlCriteria;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ControlCriteriaRepository extends JpaRepository<ControlCriteria, Integer> {
+public interface SpecificControlCriteriaRepository extends JpaRepository<SpecificControlCriteria, Integer> {
 }

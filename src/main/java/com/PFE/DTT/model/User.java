@@ -1,6 +1,7 @@
 package com.PFE.DTT.model;
 
 import jakarta.persistence.*;
+import java.util.*;
 
 @Entity
 public class User {
@@ -42,12 +43,29 @@ public class User {
     @JoinColumn(name = "department_id", nullable = false)
     private Department department;
 
-
+    // New relationship with Plant
+    @ManyToOne
+    @JoinColumn(name = "plant_id", nullable = false)
+    private Plant plant;
 
     // Define Role Enum
     public enum Role {
         ROLE_USER,
         ROLE_ADMIN
+    }
+
+    // Default Constructor (JPA Requirement)
+    public User() {}
+
+    // Constructor
+    public User(String email, String password, String phoneNumber, String firstName, String lastName, Department department, Plant plant) {
+        this.email = email;
+        this.password = password;
+        this.phoneNumber = phoneNumber;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.department = department;
+        this.plant = plant;
     }
 
     // Getters and Setters
@@ -139,4 +157,52 @@ public class User {
         this.department = department;
     }
 
+    public Plant getPlant() {
+        return plant;
+    }
+
+    public void setPlant(Plant plant) {
+        this.plant = plant;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", email='" + email + '\'' +
+                ", password='" + password + '\'' +
+                ", role=" + role +
+                ", isVerified=" + isVerified +
+                ", verificationCode='" + verificationCode + '\'' +
+                ", profilePhoto='" + profilePhoto + '\'' +
+                ", phoneNumber='" + phoneNumber + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", department=" + (department != null ? department.getId() : "null") +
+                ", plant=" + (plant != null ? plant.getId() : "null") +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User that)) return false;
+        return Objects.equals(id, that.id) &&
+                Objects.equals(email, that.email) &&
+                Objects.equals(password, that.password) &&
+                role == that.role &&
+                isVerified == that.isVerified &&
+                Objects.equals(verificationCode, that.verificationCode) &&
+                Objects.equals(profilePhoto, that.profilePhoto) &&
+                Objects.equals(phoneNumber, that.phoneNumber) &&
+                Objects.equals(firstName, that.firstName) &&
+                Objects.equals(lastName, that.lastName) &&
+                Objects.equals(department, that.department) &&
+                Objects.equals(plant, that.plant);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, email, password, role, isVerified, verificationCode, profilePhoto, phoneNumber, firstName, lastName, department, plant);
+    }
 }
