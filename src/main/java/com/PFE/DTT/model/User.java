@@ -18,7 +18,7 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role = Role.ROLE_USER; // Default role
+    private Role role = Role.EMPLOYEE; // Default role
 
     @Column(nullable = false)
     private boolean isVerified;
@@ -50,8 +50,10 @@ public class User {
 
     // Define Role Enum
     public enum Role {
-        ROLE_USER,
-        ROLE_ADMIN
+        ADMIN,
+        DEPARTMENT_MANAGER,
+        EMPLOYEE
+
     }
 
     // Default Constructor (JPA Requirement)

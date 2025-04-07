@@ -4,7 +4,6 @@ import com.PFE.DTT.model.Protocol;
 import com.PFE.DTT.model.ProtocolType;
 import com.PFE.DTT.model.User;
 import com.PFE.DTT.repository.ProtocolRepository;
-import com.PFE.DTT.repository.ProtocolTypeRepository;
 import com.PFE.DTT.repository.UserRepository;
 import com.PFE.DTT.security.JwtUtil; // ✅ Utility class to extract user ID from token
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +20,6 @@ public class ProtocolController {
     @Autowired
     private ProtocolRepository protocolRepository;
 
-    @Autowired
-    private ProtocolTypeRepository protocolTypeRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -41,32 +38,33 @@ public class ProtocolController {
             return ResponseEntity.status(401).body("Unauthorized: Missing or invalid token.");
         }
 
-        int userId = jwtUtil.extractUserId(token.substring(7)); // Remove "Bearer " and extract ID
+        int userId = jwtUtil.extractUserId(token.substring(7));
         Optional<User> user = userRepository.findById((long) userId);
-        if (user.isEmpty() || user.get().getRole() != User.Role.ROLE_ADMIN) {
+        if (user.isEmpty() || user.get().getRole() != User.Role.ADMIN) {
             return ResponseEntity.status(403).body("Only admins can create protocols.");
         }
 
-        Optional<ProtocolType> protocolType = protocolTypeRepository.findById(requestBody.getProtocolTypeId());
-        if (protocolType.isEmpty()) {
-            return ResponseEntity.badRequest().body("Invalid protocol type ID.");
+        ProtocolType protocolType;
+        try {
+            protocolType = ProtocolType.valueOf(requestBody.getProtocolType().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid protocol type. Allowed values: HOMOLOGATION, REQUALIFICATION.");
         }
 
-        Protocol protocol = new Protocol(requestBody.getName(), protocolType.get(), user.get());
+        Protocol protocol = new Protocol(requestBody.getName(), protocolType, user.get());
         protocolRepository.save(protocol);
 
         return ResponseEntity.ok("Protocol created successfully.");
     }
 
-    // DTO Class for JSON Request Body
     static class ProtocolRequest {
         private String name;
-        private int protocolTypeId;
+        private String protocolType;
 
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
 
-        public int getProtocolTypeId() { return protocolTypeId; }
-        public void setProtocolTypeId(int protocolTypeId) { this.protocolTypeId = protocolTypeId; }
+        public String getProtocolType() { return protocolType; }
+        public void setProtocolType(String protocolType) { this.protocolType = protocolType; }
     }
 }

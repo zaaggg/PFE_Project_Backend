@@ -4,32 +4,33 @@ import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
 @Entity
+@Table(
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"name", "protocolType"})
+        }
+)
 public class Protocol {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String name;
 
-    // Each Protocol belongs to one ProtocolType
-    @ManyToOne
-    @JoinColumn(name = "protocol_type_id", nullable = false)
+    // ✅ Enum-based protocol type
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private ProtocolType protocolType;
 
-    // Protocol is created by an Admin user
     @ManyToOne
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
-    // Each Protocol can have many ControlCriteria
     @OneToMany(mappedBy = "protocol", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SpecificControlCriteria> specificControlCriteriaList = new ArrayList<>();
 
-    // Constructors
     public Protocol() {}
 
     public Protocol(String name, ProtocolType protocolType, User createdBy) {
@@ -38,7 +39,7 @@ public class Protocol {
         this.createdBy = createdBy;
     }
 
-    // Getters and Setters
+    // Getters et Setters
     public int getId() {
         return id;
     }
@@ -72,32 +73,19 @@ public class Protocol {
     }
 
     public List<SpecificControlCriteria> getSpecificControlCriteria() {
-        return this.specificControlCriteriaList;
+        return specificControlCriteriaList;
     }
 
-    public void SpecificControlCriteriaList(List<SpecificControlCriteria> specificControlCriteriaList) {
+    public void setSpecificControlCriteriaList(List<SpecificControlCriteria> specificControlCriteriaList) {
         this.specificControlCriteriaList = specificControlCriteriaList;
     }
-
     @Override
     public String toString() {
         return "Protocol{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
-                ", protocolType=" + protocolType.getName() +
+                ", protocolType=" + protocolType +
                 ", createdBy=" + createdBy.getEmail() +
                 '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Protocol that)) return false;
-        return id == that.id;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
     }
 }

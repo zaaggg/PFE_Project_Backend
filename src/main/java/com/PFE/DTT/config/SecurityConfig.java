@@ -23,7 +23,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
-    private final CustomUserDetailsService userDetailsService; // ✅ Use CustomUserDetailsService
+    private final CustomUserDetailsService userDetailsService;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, CustomUserDetailsService userDetailsService) {
         this.jwtAuthFilter = jwtAuthFilter;
@@ -36,7 +36,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN") // Changed from hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -49,7 +49,7 @@ public class SecurityConfig {
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService); // ✅ Now using CustomUserDetailsService
+        authProvider.setUserDetailsService(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }

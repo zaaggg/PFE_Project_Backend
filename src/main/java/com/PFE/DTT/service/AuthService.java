@@ -20,8 +20,6 @@ public class AuthService {
     @Autowired
     private UserRepository userRepository;
 
-
-
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -31,11 +29,13 @@ public class AuthService {
     @Autowired
     private CloudinaryService cloudinaryService;
 
+    @Autowired
+    private EmailService emailService; // Add EmailService
+
     public String updateProfilePhoto(Long userId, MultipartFile photo) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Upload new photo to Cloudinary
         String newPhotoUrl = cloudinaryService.uploadProfilePhoto(photo);
         user.setProfilePhoto(newPhotoUrl);
 
@@ -54,9 +54,18 @@ public class AuthService {
         String verificationCode = String.format("%06d", new Random().nextInt(999999));
         user.setVerificationCode(verificationCode);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRole(User.Role.ROLE_USER);
+        user.setRole(User.Role.EMPLOYEE);
         user.setVerified(false);
         userRepository.save(user);
+
+        // Send verification email
+        try {
+            emailService.sendVerificationEmail(user.getEmail(), verificationCode);
+            logger.info("Verification email sent to: {}", user.getEmail());
+        } catch (Exception e) {
+            logger.error("Failed to send verification email to: {}. Error: {}", user.getEmail(), e.getMessage(), e);
+            throw new RuntimeException("Failed to send verification email", e);
+        }
 
         return "User registered successfully. Please check your email for the verification code.";
     }
@@ -79,10 +88,7 @@ public class AuthService {
     }
 
     public String getEmailFromToken(String token) {
-        // Remove the "Bearer " prefix from the token
         String cleanedToken = token.replace("Bearer ", "");
-
-        // Extract the email using JwtUtil
         return jwtUtil.extractEmail(cleanedToken);
     }
 
@@ -90,7 +96,6 @@ public class AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Upload new photo to Cloudinary
         String newPhotoUrl = cloudinaryService.uploadProfilePhoto(photo);
         user.setProfilePhoto(newPhotoUrl);
 
@@ -98,8 +103,6 @@ public class AuthService {
 
         return "Profile photo updated successfully.";
     }
-
-
 
     public String login(String email, String password) {
         logger.info("Attempting to log in user: {}", email);

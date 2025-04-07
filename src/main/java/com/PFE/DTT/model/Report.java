@@ -26,7 +26,7 @@ public class Report {
     private List<ReportUser> reportUsers = new ArrayList<>();
 
     @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ReportEntry> reportEntries; // Liste des entrées (critères)
+    private List<StandardReportEntry> reportEntries; // Liste des entrées (critères)
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -49,7 +49,7 @@ public class Report {
     public Report() {}
 
     // Constructor with all fields (except ID, auto-generated)
-    public Report(Protocol protocol, User createdBy, List<ReportUser> reportUsers, List<ReportEntry> reportEntries,
+    public Report(Protocol protocol, User createdBy, List<ReportUser> reportUsers, List<StandardReportEntry> reportEntries,
                   MaintenanceForm maintenanceForm, boolean isCompleted, String type, String serialNumber,
                   String equipmentDescription, String designation, String manufacturer, String immobilization,
                   String serviceSeg, String businessUnit) {
@@ -103,11 +103,11 @@ public class Report {
         this.reportUsers = reportUsers;
     }
 
-    public List<ReportEntry> getReportEntries() {
+    public List<StandardReportEntry> getReportEntries() {
         return reportEntries;
     }
 
-    public void setReportEntries(List<ReportEntry> reportEntries) {
+    public void setReportEntries(List<StandardReportEntry> reportEntries) {
         this.reportEntries = reportEntries;
     }
 
