@@ -113,6 +113,11 @@ public class StandardReportEntry {
         this.report = report;
     }
 
+    public void setStandardControlCriteria(StandardControlCriteria criteria) {
+        this.standardControlCriteria = criteria;
+    }
+
+
 
 
 

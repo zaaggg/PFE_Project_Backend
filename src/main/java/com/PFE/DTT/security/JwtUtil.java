@@ -27,13 +27,22 @@ public class JwtUtil {
     }
 
     public String generateToken(User user) {
+        // Build a custom map of safe user data
+        var userData = new java.util.HashMap<String, Object>();
+        userData.put("id", user.getId());
+        userData.put("email", user.getEmail());
+        userData.put("firstName", user.getFirstName());
+        userData.put("lastName", user.getLastName());
+        userData.put("role", user.getRole().name());
+        userData.put("department", user.getDepartment() != null ? user.getDepartment().getName() : null);
+        userData.put("phone", user.getPhoneNumber());
+
         return Jwts.builder()
                 .setSubject(user.getEmail())
-                .claim("userId", user.getId())  // ✅ Ensure userId is included
-                .claim("role", user.getRole().name())  // ✅ Includes role in JWT
-                .setIssuedAt(new Date())  // ✅ Token issued time
+                .claim("user", userData) // ✅ All allowed user fields// Still included for easy access
+                .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(SignatureAlgorithm.HS512, secret.getBytes())  // ✅ Always use secret.getBytes()
+                .signWith(SignatureAlgorithm.HS512, secret.getBytes())
                 .compact();
     }
 

@@ -62,11 +62,11 @@ public class SpecificReportEntry {
         this.id = id;
     }
 
-    public boolean getHomologation() {
+    public Boolean getHomologation() {
         return homologation;
     }
 
-    public void setHomologation(boolean homologation) {
+    public void setHomologation(Boolean homologation) {
         this.homologation = homologation;
     }
 
@@ -113,6 +113,11 @@ public class SpecificReportEntry {
     public SpecificControlCriteria getSpecificControlCriteria() {
         return specificControlCriteria;
     }
+
+    public void setSpecificControlCriteria(SpecificControlCriteria criteria) {
+        this.specificControlCriteria = criteria;
+    }
+
 
     @Override
     public String toString() {
