@@ -22,7 +22,8 @@ public class MaintenanceForm {
     private String controlCircuit;
     private String fuseValue;
 
-    private Boolean hasTransformer;
+    @Column(nullable = false)
+    private Boolean hasTransformer = false;
 
     private String frequency;
     private String phaseBalanceTest380v;
@@ -33,7 +34,8 @@ public class MaintenanceForm {
     private String machineSizeLength;
     private String machineSizeWidth;
 
-    private Boolean isInOrder;
+    @Column(nullable = false)
+    private Boolean isInOrder  = false;
 
 
 

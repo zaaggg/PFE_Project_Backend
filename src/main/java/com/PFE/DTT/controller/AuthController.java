@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -19,59 +21,48 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody User user) {
-        logger.info("Received registration request for email: {}", user.getEmail());
-
+    public ResponseEntity<Map<String, String>> register(@RequestBody User user) {
         try {
-            String response = authService.register(user);
-            logger.info("Registration successful for email: {}", user.getEmail());
-            return ResponseEntity.ok(response);
+            String message = authService.register(user);
+            return ResponseEntity.ok(Map.of("message", message));
         } catch (RuntimeException e) {
-            logger.error("Registration failed for email: {}", user.getEmail(), e);
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
     @PostMapping("/verify")
-    public ResponseEntity<String> verifyUser(@RequestParam String code) {
-        logger.info("Received verification request for code: {}", code);
-
+    public ResponseEntity<Map<String, String>> verifyUser(@RequestParam String code) {
         try {
-            String response = authService.verifyUser(code);
-            logger.info("Verification successful for code: {}", code);
-            return ResponseEntity.ok(response);
+            String message = authService.verifyUser(code);
+            return ResponseEntity.ok(Map.of("message", message));
         } catch (RuntimeException e) {
-            logger.error("Verification failed for code: {}", code, e);
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         logger.info("Received login request for email: {}", loginRequest.getEmail());
 
         try {
             String token = authService.login(loginRequest.getEmail(), loginRequest.getPassword());
             logger.info("Login successful for email: {}", loginRequest.getEmail());
-            return ResponseEntity.ok(token);
+            return ResponseEntity.ok(Map.of("token", token));
         } catch (RuntimeException e) {
             logger.error("Login failed for email: {}", loginRequest.getEmail(), e);
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
     @PostMapping("/update-profile-photo")
-    public ResponseEntity<String> updateProfilePhoto(@RequestHeader("Authorization") String token,
-                                                     @RequestParam MultipartFile photo) {
+    public ResponseEntity<?> updateProfilePhoto(@RequestHeader("Authorization") String token,
+                                                @RequestParam MultipartFile photo) {
         try {
-            // Extract email from token using AuthService
             String email = authService.getEmailFromToken(token);
-
-            // Update the profile photo using the email
-            String response = authService.updateProfilePhoto(email, photo);
-            return ResponseEntity.ok(response);
+            String message = authService.updateProfilePhoto(email, photo);
+            return ResponseEntity.ok(Map.of("message", message));
         } catch (RuntimeException e) {
-            return ResponseEntity.status(500).body(e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -80,21 +71,10 @@ public class AuthController {
         private String email;
         private String password;
 
-        // Getters and Setters
-        public String getEmail() {
-            return email;
-        }
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
 
-        public void setEmail(String email) {
-            this.email = email;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        public void setPassword(String password) {
-            this.password = password;
-        }
+        public String getPassword() { return password; }
+        public void setPassword(String password) { this.password = password; }
     }
 }

@@ -1,8 +1,14 @@
+
+// ✅ JwtAuthenticationFilter.java
 package com.PFE.DTT.security;
 
 import com.PFE.DTT.model.User;
 import com.PFE.DTT.repository.UserRepository;
 import io.jsonwebtoken.Claims;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -11,24 +17,19 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    public JwtAuthenticationFilter(UserRepository userRepository) {
+    public JwtAuthenticationFilter(JwtUtil jwtUtil, UserRepository userRepository) {
+        this.jwtUtil = jwtUtil;
         this.userRepository = userRepository;
     }
 
@@ -51,21 +52,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (user != null && !jwtUtil.isTokenExpired(jwt)) {
                 String role = jwtUtil.extractRole(jwt);
 
-                if (role == null) {
-                    filterChain.doFilter(request, response);
-                    return;
-                }
+                List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
 
-                List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role)); // Removed "ROLE_" prefix
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        user, null, authorities);
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        user, null, authorities
-                );
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
+
         filterChain.doFilter(request, response);
     }
 }
