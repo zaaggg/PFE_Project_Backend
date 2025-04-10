@@ -55,14 +55,17 @@ public class AuthController {
     }
 
     @PostMapping("/update-profile-photo")
-    public ResponseEntity<?> updateProfilePhoto(@RequestHeader("Authorization") String token,
-                                                @RequestParam MultipartFile photo) {
+    public ResponseEntity<String> updateProfilePhoto(@RequestHeader("Authorization") String token,
+                                                     @RequestParam MultipartFile photo) {
         try {
+            // Extract email from token using AuthService
             String email = authService.getEmailFromToken(token);
-            String message = authService.updateProfilePhoto(email, photo);
-            return ResponseEntity.ok(Map.of("message", message));
+
+            // Update the profile photo using the email
+            String response = authService.updateProfilePhoto(email, photo);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(500).body(e.getMessage());
         }
     }
 
@@ -71,10 +74,21 @@ public class AuthController {
         private String email;
         private String password;
 
-        public String getEmail() { return email; }
-        public void setEmail(String email) { this.email = email; }
+        // Getters and Setters
+        public String getEmail() {
+            return email;
+        }
 
-        public String getPassword() { return password; }
-        public void setPassword(String password) { this.password = password; }
+        public void setEmail(String email) {
+            this.email = email;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
     }
 }

@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class JwtUtil {
@@ -25,15 +27,39 @@ public class JwtUtil {
     }
 
     public String generateToken(User user) {
+        Map<String, Object> claims = new HashMap<>();
+
+        claims.put("email", user.getEmail());
+        claims.put("firstName", user.getFirstName());
+        claims.put("lastName", user.getLastName());
+        claims.put("role", user.getRole().name());
+        claims.put("phoneNumber", user.getPhoneNumber());
+        claims.put("profilePhoto", user.getProfilePhoto());
+
+        // Embed department and plant names and ids
+        if (user.getDepartment() != null) {
+            claims.put("department", Map.of(
+                    "id", user.getDepartment().getId(),
+                    "name", user.getDepartment().getName()
+            ));
+        }
+
+        if (user.getPlant() != null) {
+            claims.put("plant", Map.of(
+                    "id", user.getPlant().getId(),
+                    "name", user.getPlant().getName()
+            ));
+        }
+
         return Jwts.builder()
                 .setSubject(user.getEmail())
-                .claim("userId", user.getId())
-                .claim("role", user.getRole().name())
+                .addClaims(claims)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(SignatureAlgorithm.HS512, secret.getBytes())
                 .compact();
     }
+
 
     public Claims extractClaims(String token) {
         return Jwts.parser()
