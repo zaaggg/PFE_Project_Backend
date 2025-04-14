@@ -64,6 +64,8 @@ public class Protocol {
         this.protocolType = protocolType;
     }
 
+
+
     public User getCreatedBy() {
         return createdBy;
     }

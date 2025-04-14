@@ -30,6 +30,10 @@ public class SpecificReportEntry {
     @Column(nullable = false)
     private String successControl;
 
+    @Column(nullable = false)
+    private boolean isUpdated = false;
+
+
     // Relationship with Report (Composition)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "report_id", nullable = false)
@@ -39,6 +43,8 @@ public class SpecificReportEntry {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "specific_criteria_id")
     private SpecificControlCriteria specificControlCriteria;
+
+
 
     // Default Constructor (JPA Requirement)
     public SpecificReportEntry() {}
@@ -149,5 +155,13 @@ public class SpecificReportEntry {
     @Override
     public int hashCode() {
         return Objects.hash(id, homologation, action, responsableAction, deadline, successControl, report, specificControlCriteria);
+    }
+
+    public boolean isUpdated() {
+        return isUpdated;
+    }
+
+    public void setUpdated(boolean updated) {
+        isUpdated = updated;
     }
 }

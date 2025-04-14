@@ -2,9 +2,7 @@ package com.PFE.DTT.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Entity
 @Table(name = "report") // Recommended for clarity
@@ -22,8 +20,10 @@ public class Report {
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
-    @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ReportUser> reportUsers = new ArrayList<>();
+
+
+
+
 
     @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<StandardReportEntry> reportEntries; // Liste des entrées (critères)
@@ -45,17 +45,25 @@ public class Report {
     private String serviceSeg;
     private String businessUnit;
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "assignedUsers",
+            joinColumns = @JoinColumn(name = "report_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> assignedUsers = new HashSet<>();
+
     // Default Constructor (Required for JPA)
     public Report() {}
 
     // Constructor with all fields (except ID, auto-generated)
-    public Report(Protocol protocol, User createdBy, List<ReportUser> reportUsers, List<StandardReportEntry> reportEntries,
+    public Report(Protocol protocol, User createdBy, List<StandardReportEntry> reportEntries,
                   MaintenanceForm maintenanceForm, boolean isCompleted, String type, String serialNumber,
                   String equipmentDescription, String designation, String manufacturer, String immobilization,
                   String serviceSeg, String businessUnit) {
         this.protocol = protocol;
         this.createdBy = createdBy;
-        this.reportUsers = reportUsers;
+
         this.reportEntries = reportEntries;
         this.createdAt = LocalDateTime.now();
         this.maintenanceForm = maintenanceForm;
@@ -79,6 +87,15 @@ public class Report {
         this.id = id;
     }
 
+    public Set<User> getAssignedUsers() {
+        return assignedUsers;
+    }
+
+    public void setAssignedUsers(Set<User> assignedUsers) {
+        this.assignedUsers = assignedUsers;
+    }
+
+
     public Protocol getProtocol() {
         return protocol;
     }
@@ -95,13 +112,8 @@ public class Report {
         this.createdBy = createdBy;
     }
 
-    public List<ReportUser> getReportUsers() {
-        return reportUsers;
-    }
 
-    public void setReportUsers(List<ReportUser> reportUsers) {
-        this.reportUsers = reportUsers;
-    }
+
 
     public List<StandardReportEntry> getReportEntries() {
         return reportEntries;

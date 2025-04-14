@@ -30,6 +30,10 @@ public class StandardReportEntry {
     @Column(nullable = false)
     private String successControl;
 
+    @Column(nullable = false)
+    private boolean isUpdated = false;
+
+
     // Relationship with Report (Composition)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "report_id", nullable = false)
@@ -156,5 +160,13 @@ public class StandardReportEntry {
     @Override
     public int hashCode() {
         return Objects.hash(id, implemented, action, responsableAction, deadline, successControl, report, standardControlCriteria);
+    }
+
+    public boolean isUpdated() {
+        return isUpdated;
+    }
+
+    public void setUpdated(boolean updated) {
+        isUpdated = updated;
     }
 }
