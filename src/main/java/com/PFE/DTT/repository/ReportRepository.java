@@ -14,7 +14,8 @@ public interface ReportRepository extends JpaRepository<Report, Integer> {
     @Query("SELECT r FROM Report r WHERE r.createdBy.id = :userId ORDER BY r.createdAt DESC")
     List<Report> findByCreatedBy(@Param("userId") Long userId);
 
-    @Query("SELECT r FROM Report r JOIN r.assignedUsers u WHERE u.id = :userId")
+    @Query("SELECT r FROM Report r JOIN r.assignedUsers u WHERE u.id = :userId ORDER BY r.createdAt DESC")
     List<Report> findAssignedToUser(@Param("userId") Long userId);
+
 
 }

@@ -1,5 +1,6 @@
 package com.PFE.DTT.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.*;
 
@@ -47,6 +48,19 @@ public class User {
     @ManyToOne
     @JoinColumn(name = "plant_id", nullable = false)
     private Plant plant;
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "assignedUsers")
+    private Set<Report> reportsAssigned;
+
+    public Set<Report> getReportsAssigned() {
+        return reportsAssigned;
+    }
+
+    public void setReportsAssigned(Set<Report> reportsAssigned) {
+        this.reportsAssigned = reportsAssigned;
+    }
+
 
     // Define Role Enum
     public enum Role {

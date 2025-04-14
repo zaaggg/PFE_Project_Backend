@@ -1,9 +1,6 @@
 package com.PFE.DTT.controller;
 
-import com.PFE.DTT.dto.ReportCreationRequest;
-import com.PFE.DTT.dto.StandardReportEntryUpdateRequest;
-import com.PFE.DTT.dto.SpecificReportEntryUpdateRequest;
-import com.PFE.DTT.dto.UserAssignmentDTO;
+import com.PFE.DTT.dto.*;
 import com.PFE.DTT.model.*;
 import com.PFE.DTT.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/rapports")
@@ -275,6 +273,39 @@ public class ReportController {
         standardReportEntryRepository.save(entry);
         return ResponseEntity.ok("Standard entry updated successfully");
     }
+    private ReportDTO mapToDTO(Report report) {
+        Set<AssignedUserDTO> assignedUserDTOs = report.getAssignedUsers().stream()
+                .map(user -> {
+                    Department department = user.getDepartment();
+                    Plant plant = user.getPlant();
+                    return new AssignedUserDTO(
+                            user.getId(),
+                            user.getFirstName(),
+                            user.getLastName(),
+                            user.getEmail(),
+                            user.getProfilePhoto(),
+                            department,
+                            plant
+                    );
+                })
+                .collect(Collectors.toSet());
+
+        return new ReportDTO(
+                report.getId(),
+                report.getType(),
+                report.getSerialNumber(),
+                report.getEquipmentDescription(),
+                report.getDesignation(),
+                report.getManufacturer(),
+                report.getImmobilization(),
+                report.getServiceSeg(),
+                report.getBusinessUnit(),
+                report.getCreatedAt(),
+                report.getCreatedBy(),
+                assignedUserDTOs
+        );
+    }
+
 
 
     @PutMapping("/maintenance-form/{reportId}/fill")
@@ -334,16 +365,31 @@ public class ReportController {
 
     @GetMapping("/my-created")
     public ResponseEntity<?> getReportsCreatedByMe(@AuthenticationPrincipal User user) {
-        if (user.getRole() != User.Role.DEPARTMENT_MANAGER) {
-            return ResponseEntity.status(403).body("Unauthorized: Only department managers can view created reports");
+        if (user == null) {
+            return ResponseEntity.status(401).body("User not authenticated");
         }
+
+        System.out.println("🧠 Authenticated user: " + user.getEmail() + " | Role: " + user.getRole());
+
+        if (user.getRole() != User.Role.DEPARTMENT_MANAGER) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Unauthorized: Only department managers can view created reports");
+            return ResponseEntity.status(403).body(error);
+        }
+
         List<Report> reports = reportRepository.findByCreatedBy(user.getId());
-        return ResponseEntity.ok(reports);
+        List<ReportDTO> reportDTOs = reports.stream().map(this::mapToDTO).collect(Collectors.toList());
+        return ResponseEntity.ok(reportDTOs);
     }
 
     @GetMapping("/assigned")
     public ResponseEntity<?> getReportsAssignedToMe(@AuthenticationPrincipal User user) {
         List<Report> reports = reportRepository.findAssignedToUser(user.getId());
-        return ResponseEntity.ok(reports);
+        List<ReportDTO> reportDTOs = reports.stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(reportDTOs);
     }
+
 }
