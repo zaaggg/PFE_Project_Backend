@@ -3,6 +3,8 @@ package com.PFE.DTT.controller;
 import com.PFE.DTT.dto.*;
 import com.PFE.DTT.model.*;
 import com.PFE.DTT.repository.*;
+import com.PFE.DTT.service.SpecificReportEntryService;
+import com.PFE.DTT.service.StandardReportEntryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,33 +18,17 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/rapports")
 public class ReportController {
 
-    @Autowired
-    private ProtocolRepository protocolRepository;
-
-    @Autowired
-    private ReportRepository reportRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-
-    @Autowired
-    private DepartmentRepository departmentRepository;
-
-    @Autowired
-    private StandardControlCriteriaRepository standardControlCriteriaRepository;
-
-    @Autowired
-    private SpecificControlCriteriaRepository specificControlCriteriaRepository;
-
-    @Autowired
-    private StandardReportEntryRepository standardReportEntryRepository;
-
-    @Autowired
-    private SpecificReportEntryRepository specificReportEntryRepository;
-
-    @Autowired
-    private MaintenanceFormRepository maintenanceFormRepository;
+    @Autowired private ProtocolRepository protocolRepository;
+    @Autowired private ReportRepository reportRepository;
+    @Autowired private UserRepository userRepository;
+    @Autowired private DepartmentRepository departmentRepository;
+    @Autowired private StandardControlCriteriaRepository standardControlCriteriaRepository;
+    @Autowired private SpecificControlCriteriaRepository specificControlCriteriaRepository;
+    @Autowired private StandardReportEntryRepository standardReportEntryRepository;
+    @Autowired private SpecificReportEntryRepository specificReportEntryRepository;
+    @Autowired private MaintenanceFormRepository maintenanceFormRepository;
+    @Autowired private StandardReportEntryService standardReportEntryService;
+    @Autowired private SpecificReportEntryService specificReportEntryService;
 
     @PostMapping("/create")
     public ResponseEntity<?> createReport(@RequestBody ReportCreationRequest request,
@@ -56,9 +42,9 @@ public class ReportController {
         if (optionalProtocol.isEmpty()) {
             return ResponseEntity.badRequest().body("Invalid protocol ID.");
         }
+
         Protocol protocol = optionalProtocol.get();
 
-        // Collect required department IDs
         Set<Integer> requiredDepartmentIds = new HashSet<>();
         List<StandardControlCriteria> allStandardCriteria = standardControlCriteriaRepository.findAll();
         for (StandardControlCriteria sc : allStandardCriteria) {
@@ -70,7 +56,6 @@ public class ReportController {
             spc.getCheckResponsibles().forEach(d -> requiredDepartmentIds.add(d.getId()));
         }
 
-        // Validate user assignments
         Map<Integer, Integer> departmentToUserMap = new HashMap<>();
         for (UserAssignmentDTO ua : request.getAssignedUsers()) {
             departmentToUserMap.put(ua.getDepartmentId(), (int) ua.getUserId());
@@ -80,7 +65,6 @@ public class ReportController {
             return ResponseEntity.badRequest().body("A user must be assigned for each required department.");
         }
 
-        // Create report and set fields
         Report report = new Report();
         report.setProtocol(protocol);
         report.setCreatedBy(currentUser);
@@ -95,23 +79,14 @@ public class ReportController {
         report.setServiceSeg(request.getServiceSeg());
         report.setBusinessUnit(request.getBusinessUnit());
 
-// Ensure the list is initialized
-
-
-// ✅ Use a regular loop instead of lambda to avoid 'effectively final' issue
         Set<User> assignedUsers = new HashSet<>();
         for (UserAssignmentDTO ua : request.getAssignedUsers()) {
             userRepository.findById(ua.getUserId()).ifPresent(assignedUsers::add);
         }
         report.setAssignedUsers(assignedUsers);
 
-
-// ✅ Save the report once with cascade
         Report savedReport = reportRepository.save(report);
 
-
-
-        // Create standard report entries
         for (StandardControlCriteria sc : allStandardCriteria) {
             StandardReportEntry entry = new StandardReportEntry();
             entry.setReport(savedReport);
@@ -125,7 +100,6 @@ public class ReportController {
             standardReportEntryRepository.save(entry);
         }
 
-        // Create specific report entries
         for (SpecificControlCriteria spc : protocol.getSpecificControlCriteria()) {
             SpecificReportEntry entry = new SpecificReportEntry();
             entry.setReport(savedReport);
@@ -139,25 +113,8 @@ public class ReportController {
             specificReportEntryRepository.save(entry);
         }
 
-        // Create maintenance form
         MaintenanceForm form = new MaintenanceForm();
         form.setReport(savedReport);
-        form.setControlStandard(null);
-        form.setCurrentType(null);
-        form.setNetworkForm(null);
-        form.setPowerCircuit("");
-        form.setControlCircuit("");
-        form.setFuseValue("");
-        form.setHasTransformer(false);
-        form.setFrequency("");
-        form.setPhaseBalanceTest380v("");
-        form.setPhaseBalanceTest210v("");
-        form.setInsulationResistanceMotor("");
-        form.setInsulationResistanceCable("");
-        form.setMachineSizeHeight("");
-        form.setMachineSizeLength("");
-        form.setMachineSizeWidth("");
-        form.setIsInOrder(false);
         maintenanceFormRepository.save(form);
 
         Map<String, String> response = new HashMap<>();
@@ -165,129 +122,17 @@ public class ReportController {
         return ResponseEntity.ok(response);
     }
 
-
-
-
-    @PutMapping("/entry/specific/{entryId}")
-    public ResponseEntity<?> updateSpecificEntry(
-            @PathVariable int entryId,
-            @RequestBody SpecificReportEntryUpdateRequest req,
-            @AuthenticationPrincipal User user
-    ) {
-        Optional<SpecificReportEntry> optionalEntry = specificReportEntryRepository.findById(entryId);
-        if (optionalEntry.isEmpty()) {
-            return ResponseEntity.badRequest().body("Entry not found");
-        }
-
-        SpecificReportEntry entry = optionalEntry.get();
-
-        if (entry.isUpdated()) {
-            return ResponseEntity.badRequest().body("This entry has already been updated.");
-        }
-
-        SpecificControlCriteria criteria = entry.getSpecificControlCriteria();
-
-        boolean isAssignedUser = entry.getReport().getAssignedUsers().stream()
-                .anyMatch(u -> u.getId().equals(user.getId()));
-        boolean isCheckDept = criteria.getCheckResponsibles().stream()
-                .anyMatch(dep -> dep.getId() == (user.getDepartment().getId()));
-
-        if (!isAssignedUser || !isCheckDept) {
-            return ResponseEntity.status(403).body("You are not authorized to fill this entry");
-        }
-
-        if (req.getHomologation() == null) {
-            return ResponseEntity.badRequest().body("Homologation field is required");
-        }
-
-        entry.setHomologation(req.getHomologation());
-        if (req.getHomologation()) {
-            entry.setAction(null);
-            entry.setResponsableAction(null);
-            entry.setDeadline(null);
-            entry.setSuccessControl(null);
-        } else {
-            if (req.getAction() == null || req.getResponsableAction() == null ||
-                    req.getDeadline() == null || req.getSuccessControl() == null) {
-                return ResponseEntity.badRequest().body("All fields are required when homologation is false");
-            }
-            entry.setAction(req.getAction());
-            entry.setResponsableAction(req.getResponsableAction());
-            entry.setDeadline(req.getDeadline());
-            entry.setSuccessControl(req.getSuccessControl());
-        }
-
-        entry.setUpdated(true);
-        specificReportEntryRepository.save(entry);
-        return ResponseEntity.ok("Specific entry updated successfully");
-    }
-    @PutMapping("/entry/standard/{entryId}")
-    public ResponseEntity<?> updateStandardEntry(
-            @PathVariable int entryId,
-            @RequestBody StandardReportEntryUpdateRequest req,
-            @AuthenticationPrincipal User user
-    ) {
-        Optional<StandardReportEntry> optionalEntry = standardReportEntryRepository.findById(entryId);
-        if (optionalEntry.isEmpty()) {
-            return ResponseEntity.badRequest().body("Entry not found");
-        }
-
-        StandardReportEntry entry = optionalEntry.get();
-
-        if (entry.isUpdated()) {
-            return ResponseEntity.badRequest().body("This entry has already been updated.");
-        }
-
-        StandardControlCriteria criteria = entry.getStandardControlCriteria();
-
-        boolean isAssignedUser = entry.getReport().getAssignedUsers().stream()
-                .anyMatch(u -> u.getId().equals(user.getId()));
-        boolean isCheckDept = criteria.getCheckResponsible().getId() == (user.getDepartment().getId());
-
-        if (!isAssignedUser || !isCheckDept) {
-            return ResponseEntity.status(403).body("You are not authorized to fill this entry");
-        }
-
-        if (req.getImplemented() == null) {
-            return ResponseEntity.badRequest().body("Implemented field is required");
-        }
-
-        entry.setImplemented(req.getImplemented());
-        if (req.getImplemented()) {
-            entry.setAction(null);
-            entry.setResponsableAction(null);
-            entry.setDeadline(null);
-            entry.setSuccessControl(null);
-        } else {
-            if (req.getAction() == null || req.getResponsableAction() == null ||
-                    req.getDeadline() == null || req.getSuccessControl() == null) {
-                return ResponseEntity.badRequest().body("All fields are required when implemented is false");
-            }
-            entry.setAction(req.getAction());
-            entry.setResponsableAction(req.getResponsableAction());
-            entry.setDeadline(req.getDeadline());
-            entry.setSuccessControl(req.getSuccessControl());
-        }
-
-        entry.setUpdated(true);
-        standardReportEntryRepository.save(entry);
-        return ResponseEntity.ok("Standard entry updated successfully");
-    }
     private ReportDTO mapToDTO(Report report) {
         Set<AssignedUserDTO> assignedUserDTOs = report.getAssignedUsers().stream()
-                .map(user -> {
-                    Department department = user.getDepartment();
-                    Plant plant = user.getPlant();
-                    return new AssignedUserDTO(
-                            user.getId(),
-                            user.getFirstName(),
-                            user.getLastName(),
-                            user.getEmail(),
-                            user.getProfilePhoto(),
-                            department,
-                            plant
-                    );
-                })
+                .map(user -> new AssignedUserDTO(
+                        user.getId(),
+                        user.getFirstName(),
+                        user.getLastName(),
+                        user.getEmail(),
+                        user.getProfilePhoto(),
+                        user.getDepartment(),
+                        user.getPlant()
+                ))
                 .collect(Collectors.toSet());
 
         return new ReportDTO(
@@ -306,34 +151,39 @@ public class ReportController {
         );
     }
 
+    @PutMapping("/entry/standard/{entryId}")
+    public ResponseEntity<?> updateStandardEntry(@PathVariable int entryId,
+                                                 @RequestBody StandardReportEntryUpdateRequest req,
+                                                 @AuthenticationPrincipal User user) {
+        return standardReportEntryService.updateEntry(entryId, req, user);
+    }
 
 
-    @PutMapping("/maintenance-form/{reportId}/fill")
-    public ResponseEntity<?> fillMaintenanceForm(
-            @PathVariable int reportId,
-            @RequestBody MaintenanceForm updatedForm,
-            @AuthenticationPrincipal User user
-    ) {
+    @PutMapping("/entry/specific/{entryId}")
+    public ResponseEntity<?> updateSpecificEntry(@PathVariable int entryId,
+                                                 @RequestBody SpecificReportEntryUpdateRequest req,
+                                                 @AuthenticationPrincipal User user) {
+        return specificReportEntryService.updateEntry(entryId, req, user);
+    }
+
+    @PutMapping("/maintenance-form/{reportId}")
+    public ResponseEntity<?> fillMaintenanceForm(@PathVariable int reportId,
+                                                 @RequestBody MaintenanceForm updatedForm,
+                                                 @AuthenticationPrincipal User user) {
         Optional<Report> reportOpt = reportRepository.findById(reportId);
         if (reportOpt.isEmpty()) return ResponseEntity.badRequest().body("Report not found");
 
         Report report = reportOpt.get();
-
         Optional<MaintenanceForm> formOpt = maintenanceFormRepository.findByReportId(reportId);
         if (formOpt.isEmpty()) return ResponseEntity.badRequest().body("Maintenance form not found");
 
         MaintenanceForm form = formOpt.get();
-
         boolean isAssigned = report.getAssignedUsers().stream()
                 .anyMatch(u -> u.getId().equals(user.getId()));
+        if (!isAssigned) return ResponseEntity.status(403).body("You are not assigned to this report");
 
-        if (!isAssigned) {
-            return ResponseEntity.status(403).body("You are not assigned to this report");
-        }
-
-        String departmentName = user.getDepartment().getName().trim().toLowerCase();
-
-        if ("maintenance system".equals(departmentName)) {
+        String dept = user.getDepartment().getName().trim().toLowerCase();
+        if ("maintenance system".equals(dept)) {
             form.setControlStandard(updatedForm.getControlStandard());
             form.setCurrentType(updatedForm.getCurrentType());
             form.setNetworkForm(updatedForm.getNetworkForm());
@@ -349,12 +199,11 @@ public class ReportController {
             form.setMachineSizeHeight(updatedForm.getMachineSizeHeight());
             form.setMachineSizeLength(updatedForm.getMachineSizeLength());
             form.setMachineSizeWidth(updatedForm.getMachineSizeWidth());
-
             maintenanceFormRepository.save(form);
             return ResponseEntity.ok("Form details filled except isInOrder");
         }
 
-        if ("she".equals(departmentName)) {
+        if ("she".equals(dept)) {
             form.setIsInOrder(updatedForm.getIsInOrder());
             maintenanceFormRepository.save(form);
             return ResponseEntity.ok("isInOrder field updated");
@@ -365,18 +214,8 @@ public class ReportController {
 
     @GetMapping("/my-created")
     public ResponseEntity<?> getReportsCreatedByMe(@AuthenticationPrincipal User user) {
-        if (user == null) {
-            return ResponseEntity.status(401).body("User not authenticated");
-        }
-
-        System.out.println("🧠 Authenticated user: " + user.getEmail() + " | Role: " + user.getRole());
-
-        if (user.getRole() != User.Role.DEPARTMENT_MANAGER) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Unauthorized: Only department managers can view created reports");
-            return ResponseEntity.status(403).body(error);
-        }
-
+        if (user == null) return ResponseEntity.status(401).body("User not authenticated");
+        if (user.getRole() != User.Role.DEPARTMENT_MANAGER) return ResponseEntity.status(403).body("Unauthorized");
         List<Report> reports = reportRepository.findByCreatedBy(user.getId());
         List<ReportDTO> reportDTOs = reports.stream().map(this::mapToDTO).collect(Collectors.toList());
         return ResponseEntity.ok(reportDTOs);
@@ -384,12 +223,9 @@ public class ReportController {
 
     @GetMapping("/assigned")
     public ResponseEntity<?> getReportsAssignedToMe(@AuthenticationPrincipal User user) {
+        if (user == null) return ResponseEntity.status(401).body("Unauthorized");
         List<Report> reports = reportRepository.findAssignedToUser(user.getId());
-        List<ReportDTO> reportDTOs = reports.stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
-
+        List<ReportDTO> reportDTOs = reports.stream().map(this::mapToDTO).collect(Collectors.toList());
         return ResponseEntity.ok(reportDTOs);
     }
-
 }

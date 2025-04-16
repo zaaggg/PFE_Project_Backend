@@ -40,7 +40,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/public/**").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
-                        .requestMatchers("/api/rapports/**").hasAuthority("DEPARTMENT_MANAGER")
+                        .requestMatchers("/api/rapports/create").hasAuthority("DEPARTMENT_MANAGER")
+                        .requestMatchers("/api/rapports/my-created").hasAnyRole("DEPARTMENT_MANAGER")
+                        .requestMatchers("/api/rapports/assigned").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
+                        .requestMatchers("/api/rapports/entry/standard/{entryId}").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
+                        .requestMatchers("/api/rapports/maintenance-form/{reportId}").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
+
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

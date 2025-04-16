@@ -1,6 +1,7 @@
 package com.PFE.DTT.repository;
 
 import com.PFE.DTT.model.StandardControlCriteria;
+import com.PFE.DTT.model.StandardReportEntry;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +12,8 @@ import java.util.List;
 public interface StandardControlCriteriaRepository extends JpaRepository<StandardControlCriteria, Integer> {
 
     List<StandardControlCriteria> findAll();
+
+
 
 
 }
