@@ -37,6 +37,12 @@ public class MaintenanceForm {
     @Column(nullable = false)
     private Boolean isInOrder  = false;
 
+    @Column(name = "maintenance_system_updated")
+    private boolean maintenanceSystemUpdated = false;
+
+    @Column(name = "she_updated")
+    private boolean sheUpdated = false;
+
 
 
     @OneToOne
@@ -104,4 +110,20 @@ public class MaintenanceForm {
 
     public Report getReport() { return report; }
     public void setReport(Report report) { this.report = report; }
+
+    public boolean getMaintenanceSystemUpdated() {
+        return maintenanceSystemUpdated;
+    }
+
+    public void setMaintenanceSystemUpdated(boolean maintenanceSystemUpdated) {
+        this.maintenanceSystemUpdated = maintenanceSystemUpdated;
+    }
+
+    public boolean getSheUpdated() {
+        return sheUpdated;
+    }
+
+    public void setSheUpdated(boolean sheUpdated) {
+        this.sheUpdated = sheUpdated;
+    }
 }

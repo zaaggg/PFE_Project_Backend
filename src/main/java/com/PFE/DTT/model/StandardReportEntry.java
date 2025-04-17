@@ -69,7 +69,7 @@ public class StandardReportEntry {
         this.id = id;
     }
 
-    public Boolean getImplemented() {
+    public Boolean isImplemented() {
         return implemented;
     }
 
@@ -162,7 +162,7 @@ public class StandardReportEntry {
         return Objects.hash(id, implemented, action, responsableAction, deadline, successControl, report, standardControlCriteria);
     }
 
-    public boolean isUpdated() {
+    public boolean getIsUpdated() {
         return isUpdated;
     }
 

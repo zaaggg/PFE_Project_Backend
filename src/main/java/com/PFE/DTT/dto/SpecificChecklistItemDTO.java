@@ -47,3 +47,4 @@ public class SpecificChecklistItemDTO {
     public boolean isUpdated() { return isUpdated; }
     public void setUpdated(boolean updated) { isUpdated = updated; }
 }
+
