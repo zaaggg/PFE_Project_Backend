@@ -153,74 +153,6 @@ public class ReportController {
 
 
 
-    @PutMapping("/maintenance-form/{reportId}")
-    public ResponseEntity<?> fillMaintenanceForm(
-            @PathVariable int reportId,
-            @RequestBody MaintenanceForm updatedForm,
-            @AuthenticationPrincipal User user
-    ) {
-        Optional<Report> reportOpt = reportRepository.findById(reportId);
-        if (reportOpt.isEmpty()) return ResponseEntity.badRequest().body("Report not found");
-
-        Report report = reportOpt.get();
-
-        Optional<MaintenanceForm> formOpt = maintenanceFormRepository.findByReportId(reportId);
-        if (formOpt.isEmpty()) return ResponseEntity.badRequest().body("Maintenance form not found");
-
-        MaintenanceForm form = formOpt.get();
-
-        boolean isAssigned = report.getAssignedUsers().stream()
-                .anyMatch(u -> u.getId().equals(user.getId()));
-
-        if (!isAssigned) {
-            return ResponseEntity.status(403).body("You are not assigned to this report");
-        }
-
-        String departmentName = user.getDepartment().getName().trim().toLowerCase();
-
-        if ("maintenance system".equals(departmentName)) {
-            if (form.getMaintenanceSystemUpdated()) {
-                return ResponseEntity.status(403).body("You have already filled your part of the form");
-            }
-
-            form.setControlStandard(updatedForm.getControlStandard());
-            form.setCurrentType(updatedForm.getCurrentType());
-            form.setNetworkForm(updatedForm.getNetworkForm());
-            form.setPowerCircuit(updatedForm.getPowerCircuit());
-            form.setControlCircuit(updatedForm.getControlCircuit());
-            form.setFuseValue(updatedForm.getFuseValue());
-            form.setHasTransformer(updatedForm.getHasTransformer());
-            form.setFrequency(updatedForm.getFrequency());
-            form.setPhaseBalanceTest380v(updatedForm.getPhaseBalanceTest380v());
-            form.setPhaseBalanceTest210v(updatedForm.getPhaseBalanceTest210v());
-            form.setInsulationResistanceMotor(updatedForm.getInsulationResistanceMotor());
-            form.setInsulationResistanceCable(updatedForm.getInsulationResistanceCable());
-            form.setMachineSizeHeight(updatedForm.getMachineSizeHeight());
-            form.setMachineSizeLength(updatedForm.getMachineSizeLength());
-            form.setMachineSizeWidth(updatedForm.getMachineSizeWidth());
-
-            form.setMaintenanceSystemUpdated(true);
-            maintenanceFormRepository.save(form);
-            return ResponseEntity.ok("Maintenance System section filled");
-        }
-
-        if ("she".equals(departmentName)) {
-            if (!form.getMaintenanceSystemUpdated()) {
-                return ResponseEntity.badRequest().body("Maintenance system must complete their section first");
-            }
-
-            if (form.getSheUpdated()) {
-                return ResponseEntity.status(403).body("You have already filled your part of the form");
-            }
-
-            form.setIsInOrder(updatedForm.getIsInOrder());
-            form.setSheUpdated(true);
-            maintenanceFormRepository.save(form);
-            return ResponseEntity.ok("SHE section filled");
-        }
-
-        return ResponseEntity.status(403).body("You do not have permission to update the maintenance form");
-    }
 
 
     @GetMapping("/my-created")
@@ -242,11 +174,14 @@ public class ReportController {
 
 // ReportController.java (updated checklist GET APIs + maintenance form flags)
 
+
+
     @GetMapping("/standard-checklist/{reportId}")
     public ResponseEntity<?> getStandardChecklist(@PathVariable int reportId, @AuthenticationPrincipal User user) {
         List<StandardChecklistItemDTO> checklist = standardReportEntryService.getChecklistForUser((long) reportId, user);
         return ResponseEntity.ok(checklist);
     }
+
 
     @GetMapping("/specific-checklist/{reportId}")
     public ResponseEntity<?> getSpecificChecklist(@PathVariable int reportId, @AuthenticationPrincipal User user) {
@@ -254,26 +189,6 @@ public class ReportController {
         return ResponseEntity.ok(checklist);
     }
 
-    @GetMapping("/maintenance-form/{reportId}")
-    public ResponseEntity<?> getMaintenanceForm(@PathVariable int reportId, @AuthenticationPrincipal User user) {
-        Optional<MaintenanceForm> formOpt = maintenanceFormRepository.findByReportId(reportId);
-        if (formOpt.isEmpty()) {
-            return ResponseEntity.badRequest().body("Maintenance form not found");
-        }
-
-        MaintenanceForm form = formOpt.get();
-        String department = user.getDepartment().getName().trim().toLowerCase();
-
-        if ("maintenance system".equals(department) && Boolean.TRUE.equals(form.getMaintenanceSystemUpdated())) {
-            return ResponseEntity.status(403).body("Already filled by Maintenance");
-        }
-
-        if ("she".equals(department) && Boolean.TRUE.equals(form.getSheUpdated())) {
-            return ResponseEntity.status(403).body("Already filled by SHE");
-        }
-
-        return ResponseEntity.ok(form);
-    }
 
     // ✅ PUT - Update Standard Checklist Entry
     @PutMapping("/entry/standard/{entryId}")
@@ -302,25 +217,61 @@ public class ReportController {
         }
     }
 
-
-    // ✅ PUT - Update Maintenance Form
-    @PutMapping("/maintenance-form/update/{reportId}")
-    public ResponseEntity<?> updateMaintenanceForm(@PathVariable int reportId,
-                                                   @RequestBody MaintenanceForm updatedForm,
-                                                   @AuthenticationPrincipal User user) {
-        Optional<Report> reportOpt = reportRepository.findById(reportId);
-        if (reportOpt.isEmpty()) return ResponseEntity.badRequest().body("Report not found");
-
-        Report report = reportOpt.get();
+    @GetMapping("/maintenance-form/{reportId}")
+    public ResponseEntity<?> getMaintenanceForm(@PathVariable int reportId, @AuthenticationPrincipal User user) {
         Optional<MaintenanceForm> formOpt = maintenanceFormRepository.findByReportId(reportId);
-        if (formOpt.isEmpty()) return ResponseEntity.badRequest().body("Maintenance form not found");
+        if (formOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("Maintenance form not found");
+        }
 
         MaintenanceForm form = formOpt.get();
         String department = user.getDepartment().getName().trim().toLowerCase();
 
+        boolean canEditMaintenance = "maintenance system".equals(department)
+                && Boolean.FALSE.equals(form.getMaintenanceSystemUpdated());
+
+        boolean canEditShe = "she".equals(department)
+                && Boolean.TRUE.equals(form.getMaintenanceSystemUpdated())
+                && Boolean.FALSE.equals(form.getSheUpdated());
+
+        MaintenanceFormDTO dto = new MaintenanceFormDTO();
+        dto.setForm(form);
+        dto.setCanEditMaintenance(canEditMaintenance);
+        dto.setCanEditShe(canEditShe);
+
+        return ResponseEntity.ok(dto); // ✅ Always return the form with edit flags
+    }
+
+
+
+
+    @PutMapping("/maintenance-form/update/{reportId}")
+    public ResponseEntity<?> updateMaintenanceForm(
+            @PathVariable int reportId,
+            @RequestBody MaintenanceForm updatedForm,
+            @AuthenticationPrincipal User user) {
+
+        Optional<Report> reportOpt = reportRepository.findById(reportId);
+        if (reportOpt.isEmpty()) return ResponseEntity.badRequest().body("Report not found");
+
+        Optional<MaintenanceForm> formOpt = maintenanceFormRepository.findByReportId(reportId);
+        if (formOpt.isEmpty()) return ResponseEntity.badRequest().body("Maintenance form not found");
+
+        Report report = reportOpt.get();
+        MaintenanceForm form = formOpt.get();
+
+        boolean isAssigned = report.getAssignedUsers().contains(user);
+        boolean isCreator = report.getCreatedBy().getId().equals(user.getId());
+        String department = user.getDepartment().getName().trim().toLowerCase();
+
+        // MAINTENANCE SYSTEM
         if ("maintenance system".equals(department)) {
-            if (form.getMaintenanceSystemUpdated())
+            if (!isAssigned && !isCreator) {
+                return ResponseEntity.status(403).body("Not allowed: Only assigned users or creator can update");
+            }
+            if (form.getMaintenanceSystemUpdated()) {
                 return ResponseEntity.status(403).body("Already filled by maintenance system");
+            }
 
             form.setControlStandard(updatedForm.getControlStandard());
             form.setCurrentType(updatedForm.getCurrentType());
@@ -337,18 +288,25 @@ public class ReportController {
             form.setMachineSizeHeight(updatedForm.getMachineSizeHeight());
             form.setMachineSizeLength(updatedForm.getMachineSizeLength());
             form.setMachineSizeWidth(updatedForm.getMachineSizeWidth());
-            form.setMaintenanceSystemUpdated(true);
 
+            form.setMaintenanceSystemUpdated(true);
             maintenanceFormRepository.save(form);
             return ResponseEntity.ok("Maintenance system part updated");
         }
 
+        // SHE
         if ("she".equals(department)) {
-            if (!form.getMaintenanceSystemUpdated())
-                return ResponseEntity.status(403).body("Wait for maintenance system to complete");
+            if (!form.getMaintenanceSystemUpdated()) {
+                return ResponseEntity.status(403).body("Maintenance system must complete their section first");
+            }
 
-            if (form.getSheUpdated())
+            if (!isAssigned && !isCreator) {
+                return ResponseEntity.status(403).body("Not allowed: Only assigned users or creator can update");
+            }
+
+            if (form.getSheUpdated()) {
                 return ResponseEntity.status(403).body("Already filled by SHE");
+            }
 
             form.setIsInOrder(updatedForm.getIsInOrder());
             form.setSheUpdated(true);
@@ -357,8 +315,10 @@ public class ReportController {
             return ResponseEntity.ok("SHE part updated");
         }
 
-        return ResponseEntity.status(403).body("You are not authorized to update the maintenance form");
+        return ResponseEntity.status(403).body("You are not authorized to update any part of the maintenance form");
     }
+
+
 
 
 }

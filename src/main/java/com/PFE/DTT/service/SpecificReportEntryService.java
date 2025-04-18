@@ -9,7 +9,9 @@ import com.PFE.DTT.model.User;
 import com.PFE.DTT.repository.SpecificReportEntryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,23 +22,31 @@ public class SpecificReportEntryService {
 
     public List<SpecificChecklistItemDTO> getChecklistForUser(Long reportId, User user) {
         return repository.findByReportId(reportId).stream()
-                .filter(entry ->
-                        entry.getReport().getAssignedUsers().contains(user) &&
-                                entry.getSpecificControlCriteria().getCheckResponsibles().stream()
-                                        .anyMatch(dep -> dep.getId() == user.getDepartment().getId())
-                )
                 .map(entry -> {
                     SpecificChecklistItemDTO dto = new SpecificChecklistItemDTO();
+                    dto.setEntryId(entry.getId());
                     dto.setCriteriaId(entry.getSpecificControlCriteria().getId());
                     dto.setCriteriaDescription(entry.getSpecificControlCriteria().getDescription());
-                    dto.setCheckResponsibles((List<Department>) entry.getSpecificControlCriteria().getCheckResponsibles());
-                    dto.setImplementationResponsibles((List<Department>) entry.getSpecificControlCriteria().getImplementationResponsibles());
+
+                    Set<Department> checkSet = entry.getSpecificControlCriteria().getCheckResponsibles();
+                    Set<Department> implSet = entry.getSpecificControlCriteria().getImplementationResponsibles();
+                    dto.setCheckResponsibles(checkSet.stream().collect(Collectors.toList()));
+                    dto.setImplementationResponsibles(implSet.stream().collect(Collectors.toList()));
+
                     dto.setHomologation(entry.getHomologation());
                     dto.setAction(entry.getAction());
                     dto.setResponsableAction(entry.getResponsableAction());
                     dto.setDeadline(entry.getDeadline());
                     dto.setSuccessControl(entry.getSuccessControl());
                     dto.setUpdated(entry.isUpdated());
+
+                    boolean isAssigned = entry.getReport().getAssignedUsers().contains(user);
+                    boolean isCheckResponsible = entry.getSpecificControlCriteria().getCheckResponsibles().stream()
+                            .anyMatch(dep -> dep.getId() == (user.getDepartment().getId()));
+                    boolean isCreator = entry.getReport().getCreatedBy().getId().equals(user.getId());
+                    boolean isEditable = !entry.isUpdated() && (isCreator || isAssigned) && isCheckResponsible;
+                    dto.setEditable(isEditable);
+
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -48,10 +58,11 @@ public class SpecificReportEntryService {
         if (entry.isUpdated()) return "This entry is already updated";
 
         boolean isAssigned = entry.getReport().getAssignedUsers().contains(user);
-        boolean isCorrectDept = entry.getSpecificControlCriteria().getCheckResponsibles().stream()
-                .anyMatch(dep -> dep.getId() == user.getDepartment().getId());
+        boolean isCheckResponsible = entry.getSpecificControlCriteria().getCheckResponsibles().stream()
+                .anyMatch(dep -> dep.getId() == (user.getDepartment().getId()));
+        boolean isCreator = entry.getReport().getCreatedBy().getId().equals(user.getId());
 
-        if (!isAssigned || !isCorrectDept) return "Unauthorized";
+        if (!(isAssigned || isCreator) || !isCheckResponsible) return "Unauthorized";
 
         entry.setHomologation(req.isHomologation());
         if (req.isHomologation()) {

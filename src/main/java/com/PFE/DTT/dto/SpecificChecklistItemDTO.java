@@ -5,16 +5,19 @@ import com.PFE.DTT.model.Department;
 import java.util.List;
 
 public class SpecificChecklistItemDTO {
+    private int entryId; // ✅ Add this field so Angular can submit updates
     private int criteriaId;
     private String criteriaDescription;
     private List<Department> checkResponsibles;
     private List<Department> implementationResponsibles;
-    private boolean homologation;
+    private Boolean homologation;
     private String action;
     private String responsableAction;
     private String deadline;
     private String successControl;
-    private boolean isUpdated;
+    private Boolean isUpdated;
+    private Boolean editable; // ✅ NEW FIELD
+
 
     // Getters and Setters
     public int getCriteriaId() { return criteriaId; }
@@ -29,8 +32,8 @@ public class SpecificChecklistItemDTO {
     public List<Department> getImplementationResponsibles() { return implementationResponsibles; }
     public void setImplementationResponsibles(List<Department> implementationResponsibles) { this.implementationResponsibles = implementationResponsibles; }
 
-    public boolean isHomologation() { return homologation; }
-    public void setHomologation(boolean homologation) { this.homologation = homologation; }
+    public Boolean isHomologation() { return homologation; }
+    public void setHomologation(Boolean homologation) { this.homologation = homologation; }
 
     public String getAction() { return action; }
     public void setAction(String action) { this.action = action; }
@@ -44,7 +47,23 @@ public class SpecificChecklistItemDTO {
     public String getSuccessControl() { return successControl; }
     public void setSuccessControl(String successControl) { this.successControl = successControl; }
 
-    public boolean isUpdated() { return isUpdated; }
-    public void setUpdated(boolean updated) { isUpdated = updated; }
+    public Boolean isUpdated() { return isUpdated; }
+    public void setUpdated(Boolean updated) { isUpdated = updated; }
+
+    public int getEntryId() {
+        return entryId;
+    }
+
+    public void setEntryId(int entryId) {
+        this.entryId = entryId;
+    }
+
+    public Boolean isEditable() {
+        return editable;
+    }
+
+    public void setEditable(Boolean editable) {
+        this.editable = editable;
+    }
 }
 

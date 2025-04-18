@@ -40,12 +40,12 @@ public class User {
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "department_id", nullable = false)
     private Department department;
 
     // New relationship with Plant
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "plant_id", nullable = false)
     private Plant plant;
 

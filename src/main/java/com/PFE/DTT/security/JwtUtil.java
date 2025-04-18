@@ -27,6 +27,8 @@ public class JwtUtil {
     }
 
     public String generateToken(User user) {
+        System.out.println("JWT secret used: " + secret);
+
         Map<String, Object> claims = new HashMap<>();
 
         claims.put("email", user.getEmail());
@@ -62,6 +64,8 @@ public class JwtUtil {
 
 
     public Claims extractClaims(String token) {
+        System.out.println("JWT secret used: " + secret);
+
         return Jwts.parser()
                 .setSigningKey(secret.getBytes())
                 .parseClaimsJws(token)

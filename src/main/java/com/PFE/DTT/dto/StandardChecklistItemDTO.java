@@ -1,7 +1,6 @@
 package com.PFE.DTT.dto;
 
 import com.PFE.DTT.model.Department;
-import com.PFE.DTT.model.StandardReportEntry;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,18 +9,23 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class StandardChecklistItemDTO {
+    private int entryId; // ✅ NEW FIELD
     private int criteriaId;
     private String criteriaDescription;
     private Department checkResponsible;
     private Department implementationResponsible;
-    private boolean implemented;
+    private Boolean implemented;
     private String action;
     private String responsableAction;
     private String deadline;
     private String successControl;
-    private boolean isUpdated;
+    private Boolean isUpdated;
+    private Boolean editable;
 
     // Getters and Setters
+    public int getEntryId() { return entryId; }
+    public void setEntryId(int entryId) { this.entryId = entryId; }
+
     public int getCriteriaId() { return criteriaId; }
     public void setCriteriaId(int criteriaId) { this.criteriaId = criteriaId; }
 
@@ -34,8 +38,8 @@ public class StandardChecklistItemDTO {
     public Department getImplementationResponsible() { return implementationResponsible; }
     public void setImplementationResponsible(Department implementationResponsible) { this.implementationResponsible = implementationResponsible; }
 
-    public boolean isImplemented() { return implemented; }
-    public void setImplemented(boolean implemented) { this.implemented = implemented; }
+    public Boolean isImplemented() { return implemented; }
+    public void setImplemented(Boolean implemented) { this.implemented = implemented; }
 
     public String getAction() { return action; }
     public void setAction(String action) { this.action = action; }
@@ -49,6 +53,14 @@ public class StandardChecklistItemDTO {
     public String getSuccessControl() { return successControl; }
     public void setSuccessControl(String successControl) { this.successControl = successControl; }
 
-    public boolean isUpdated() { return isUpdated; }
-    public void setUpdated(boolean updated) { isUpdated = updated; }
+    public Boolean isUpdated() { return isUpdated; }
+    public void setUpdated(Boolean updated) { isUpdated = updated; }
+
+    public Boolean isEditable() {
+        return editable;
+    }
+
+    public void setEditable(Boolean editable) {
+        this.editable = editable;
+    }
 }

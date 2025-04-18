@@ -40,16 +40,16 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/public/**").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
-                        .requestMatchers("/api/rapports/create").hasAuthority("DEPARTMENT_MANAGER")
-                        .requestMatchers("/api/protocols/grouped").hasAuthority("DEPARTMENT_MANAGER")
-                        .requestMatchers("/api/rapports/my-created").hasAuthority("DEPARTMENT_MANAGER")
-                        .requestMatchers("/api/rapports/assigned").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
-                        .requestMatchers("/api/rapports/maintenance-form/update/{reportId}}").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
-                        .requestMatchers("/api/rapports/maintenance-form/{reportId}").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
-                        .requestMatchers("/api/rapports/specific-checklist/{reportId}").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
-                        .requestMatchers("/api/rapports/standard-checklist/{reportId}").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
-                        .requestMatchers("/api/rapports/entry/standard/{entryId").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
-                        .requestMatchers("/api/rapports/entry/specific/{entryId").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
+                        /*   .requestMatchers("/api/rapports/create").hasAuthority("DEPARTMENT_MANAGER")
+
+                       /* .requestMatchers("/api/rapports/my-created").hasAuthority("DEPARTMENT_MANAGER")
+                         .requestMatchers("/api/rapports/assigned").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
+                          .requestMatchers("/api/rapports/maintenance-form/update/{reportId}").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
+                          .requestMatchers("/api/rapports/maintenance-form/{reportId}").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
+                          .requestMatchers("/api/rapports/specific-checklist/{reportId}").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
+                          .requestMatchers("/api/rapports/standard-checklist/{reportId}").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
+                          .requestMatchers("/api/rapports/entry/standard/{entryId}").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
+                          .requestMatchers("/api/rapports/entry/specific/{entryId}").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")*/
 
 
                         .anyRequest().authenticated()
