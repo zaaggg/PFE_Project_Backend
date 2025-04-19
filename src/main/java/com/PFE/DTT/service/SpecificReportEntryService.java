@@ -44,7 +44,8 @@ public class SpecificReportEntryService {
                     boolean isCheckResponsible = entry.getSpecificControlCriteria().getCheckResponsibles().stream()
                             .anyMatch(dep -> dep.getId() == (user.getDepartment().getId()));
                     boolean isCreator = entry.getReport().getCreatedBy().getId().equals(user.getId());
-                    boolean isEditable = !entry.isUpdated() && (isCreator || isAssigned) && isCheckResponsible;
+
+                    boolean isEditable = !entry.isUpdated() && isCheckResponsible && (isAssigned || isCreator);
                     dto.setEditable(isEditable);
 
                     return dto;
@@ -62,7 +63,7 @@ public class SpecificReportEntryService {
                 .anyMatch(dep -> dep.getId() == (user.getDepartment().getId()));
         boolean isCreator = entry.getReport().getCreatedBy().getId().equals(user.getId());
 
-        if (!(isAssigned || isCreator) || !isCheckResponsible) return "Unauthorized";
+        if (!isCheckResponsible || (!isAssigned && !isCreator)) return "Unauthorized";
 
         entry.setHomologation(req.isHomologation());
         if (req.isHomologation()) {

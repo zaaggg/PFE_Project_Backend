@@ -234,13 +234,15 @@ public class ReportController {
                 && Boolean.TRUE.equals(form.getMaintenanceSystemUpdated())
                 && Boolean.FALSE.equals(form.getSheUpdated());
 
-        MaintenanceFormDTO dto = new MaintenanceFormDTO();
-        dto.setForm(form);
-        dto.setCanEditMaintenance(canEditMaintenance);
-        dto.setCanEditShe(canEditShe);
+        MaintenanceFormDTO dto = new MaintenanceFormDTO(form, canEditMaintenance, canEditShe);
 
-        return ResponseEntity.ok(dto); // ✅ Always return the form with edit flags
+        System.out.println("Sending DTO: " + dto); // ✅ Confirm in logs
+
+        return ResponseEntity.ok(dto);
     }
+
+
+
 
 
 
@@ -252,10 +254,14 @@ public class ReportController {
             @AuthenticationPrincipal User user) {
 
         Optional<Report> reportOpt = reportRepository.findById(reportId);
-        if (reportOpt.isEmpty()) return ResponseEntity.badRequest().body("Report not found");
+        if (reportOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Report not found"));
+        }
 
         Optional<MaintenanceForm> formOpt = maintenanceFormRepository.findByReportId(reportId);
-        if (formOpt.isEmpty()) return ResponseEntity.badRequest().body("Maintenance form not found");
+        if (formOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Maintenance form not found"));
+        }
 
         Report report = reportOpt.get();
         MaintenanceForm form = formOpt.get();
@@ -267,10 +273,11 @@ public class ReportController {
         // MAINTENANCE SYSTEM
         if ("maintenance system".equals(department)) {
             if (!isAssigned && !isCreator) {
-                return ResponseEntity.status(403).body("Not allowed: Only assigned users or creator can update");
+                return ResponseEntity.status(403).body(Map.of("error", "Not allowed: Only assigned users or creator can update"));
             }
-            if (form.getMaintenanceSystemUpdated()) {
-                return ResponseEntity.status(403).body("Already filled by maintenance system");
+
+            if (Boolean.TRUE.equals(form.getMaintenanceSystemUpdated())) {
+                return ResponseEntity.status(403).body(Map.of("error", "Already filled by maintenance system"));
             }
 
             form.setControlStandard(updatedForm.getControlStandard());
@@ -291,33 +298,33 @@ public class ReportController {
 
             form.setMaintenanceSystemUpdated(true);
             maintenanceFormRepository.save(form);
-            return ResponseEntity.ok("Maintenance system part updated");
+
+            return ResponseEntity.ok(Map.of("message", "Maintenance system part updated"));
         }
 
         // SHE
         if ("she".equals(department)) {
-            if (!form.getMaintenanceSystemUpdated()) {
-                return ResponseEntity.status(403).body("Maintenance system must complete their section first");
+            if (!Boolean.TRUE.equals(form.getMaintenanceSystemUpdated())) {
+                return ResponseEntity.status(403).body(Map.of("error", "Maintenance system must complete their section first"));
             }
 
             if (!isAssigned && !isCreator) {
-                return ResponseEntity.status(403).body("Not allowed: Only assigned users or creator can update");
+                return ResponseEntity.status(403).body(Map.of("error", "Not allowed: Only assigned users or creator can update"));
             }
 
-            if (form.getSheUpdated()) {
-                return ResponseEntity.status(403).body("Already filled by SHE");
+            if (Boolean.TRUE.equals(form.getSheUpdated())) {
+                return ResponseEntity.status(403).body(Map.of("error", "Already filled by SHE"));
             }
 
             form.setIsInOrder(updatedForm.getIsInOrder());
             form.setSheUpdated(true);
-
             maintenanceFormRepository.save(form);
-            return ResponseEntity.ok("SHE part updated");
+
+            return ResponseEntity.ok(Map.of("message", "SHE part updated"));
         }
 
-        return ResponseEntity.status(403).body("You are not authorized to update any part of the maintenance form");
+        return ResponseEntity.status(403).body(Map.of("error", "You are not authorized to update any part of the maintenance form"));
     }
-
 
 
 

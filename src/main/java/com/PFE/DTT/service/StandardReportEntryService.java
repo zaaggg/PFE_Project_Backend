@@ -37,10 +37,10 @@ public class StandardReportEntryService {
 
                     boolean isAssigned = entry.getReport().getAssignedUsers().stream()
                             .anyMatch(u -> u.getId().equals(user.getId()));
-                    boolean isCheckResponsible = entry.getStandardControlCriteria().getCheckResponsible().getId() == user.getDepartment().getId();
+                    boolean isCheckResponsible = entry.getStandardControlCriteria().getCheckResponsible().getId() == (user.getDepartment().getId());
                     boolean isCreator = entry.getReport().getCreatedBy().getId().equals(user.getId());
 
-                    dto.setEditable(!entry.getIsUpdated() && ((isAssigned && isCheckResponsible) || isCreator));
+                    dto.setEditable(!entry.getIsUpdated() && isAssigned && isCheckResponsible);
 
                     return dto;
                 })

@@ -1,5 +1,6 @@
 package com.PFE.DTT.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -45,6 +46,7 @@ public class MaintenanceForm {
 
 
 
+    @JsonIgnore
     @OneToOne
     @JoinColumn(name = "report_id")
     private Report report;
