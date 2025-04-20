@@ -18,16 +18,16 @@ public class StandardReportEntry {
     @Column(nullable = false)
     private Boolean implemented;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String action;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String responsableAction;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String deadline;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String successControl;
 
     @Column(nullable = false)

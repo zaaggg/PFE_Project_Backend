@@ -191,31 +191,41 @@ public class ReportController {
 
 
     // ✅ PUT - Update Standard Checklist Entry
-    @PutMapping("/entry/standard/{entryId}")
-    public ResponseEntity<?> updateStandardEntry(@PathVariable int entryId,
-                                                 @RequestBody StandardReportEntryDTO dto,
-                                                 @AuthenticationPrincipal User user) {
-        String result = standardReportEntryService.updateEntry(entryId, dto, user);
-        if (result.equals("OK")) {
-            return ResponseEntity.ok("Standard entry updated");
-        } else {
-            return ResponseEntity.badRequest().body(result);
+    @PutMapping("/entry/standard/batch-update")
+    public ResponseEntity<Map<String, String>> updateMultipleStandardEntries(@RequestBody List<StandardReportEntryDTO> entries,
+                                                                             @AuthenticationPrincipal User user) {
+        for (StandardReportEntryDTO dto : entries) {
+            String result = standardReportEntryService.updateEntry(dto.getId(), dto, user);
+            if (!"OK".equals(result)) {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Failed to update entry ID " + dto.getId() + ": " + result);
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
         }
+
+        Map<String, String> successResponse = new HashMap<>();
+        successResponse.put("message", "Selected standard entries updated successfully");
+        return ResponseEntity.ok(successResponse);
     }
+
+
 
 
     // ✅ PUT - Update Specific Checklist Entry
-    @PutMapping("/entry/specific/{entryId}")
-    public ResponseEntity<?> updateSpecificEntry(@PathVariable int entryId,
-                                                 @RequestBody SpecificReportEntryDTO dto,
-                                                 @AuthenticationPrincipal User user) {
-        String result = specificReportEntryService.updateEntry(entryId, dto, user);
-        if (result.equals("OK")) {
-            return ResponseEntity.ok("Specific entry updated");
-        } else {
-            return ResponseEntity.badRequest().body(result);
+    @PutMapping("/entry/specific/batch-update")
+    public ResponseEntity<?> updateMultipleSpecificEntries(@RequestBody List<SpecificReportEntryDTO> entries,
+                                                           @AuthenticationPrincipal User user) {
+        for (SpecificReportEntryDTO dto : entries) {
+            String result = specificReportEntryService.updateEntry(dto.getId(), dto, user);
+            if (!"OK".equals(result)) {
+                return ResponseEntity.badRequest().body("Failed to update entry ID " + dto.getId() + ": " + result);
+            }
         }
+        return ResponseEntity.ok(Map.of("message", "Selected specific entries updated successfully"));
     }
+
+
+
 
     @GetMapping("/maintenance-form/{reportId}")
     public ResponseEntity<?> getMaintenanceForm(@PathVariable int reportId, @AuthenticationPrincipal User user) {
