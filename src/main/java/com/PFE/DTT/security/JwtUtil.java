@@ -49,7 +49,8 @@ public class JwtUtil {
         if (user.getPlant() != null) {
             claims.put("plant", Map.of(
                     "id", user.getPlant().getId(),
-                    "name", user.getPlant().getName()
+                    "name", user.getPlant().getName(),
+                    "address", user.getPlant().getAddress()
             ));
         }
 

@@ -6,10 +6,12 @@ import com.PFE.DTT.repository.*;
 import com.PFE.DTT.service.SpecificReportEntryService;
 import com.PFE.DTT.service.StandardReportEntryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -29,6 +31,10 @@ public class ReportController {
     @Autowired private MaintenanceFormRepository maintenanceFormRepository;
     @Autowired private StandardReportEntryService standardReportEntryService;
     @Autowired private SpecificReportEntryService specificReportEntryService;
+    @Autowired ReportValidationRepository reportValidationRepository;
+    @Autowired ValidationEntryRepository validationEntryRepository;
+
+
 
     @PostMapping("/create")
     public ResponseEntity<?> createReport(@RequestBody ReportCreationRequest request,
@@ -45,17 +51,31 @@ public class ReportController {
 
         Protocol protocol = optionalProtocol.get();
 
+        // ✅ 1. Collect required department IDs
         Set<Integer> requiredDepartmentIds = new HashSet<>();
+
         List<StandardControlCriteria> allStandardCriteria = standardControlCriteriaRepository.findAll();
         for (StandardControlCriteria sc : allStandardCriteria) {
             requiredDepartmentIds.add(sc.getImplementationResponsible().getId());
             requiredDepartmentIds.add(sc.getCheckResponsible().getId());
         }
+
         for (SpecificControlCriteria spc : protocol.getSpecificControlCriteria()) {
             spc.getImplementationResponsibles().forEach(d -> requiredDepartmentIds.add(d.getId()));
             spc.getCheckResponsibles().forEach(d -> requiredDepartmentIds.add(d.getId()));
         }
 
+        // ✅ 2. Fetch ReportValidation entries with matching protocol type
+        List<ReportValidation> matchingValidations =
+                reportValidationRepository.findByProtocolType(protocol.getProtocolType());
+
+        for (ReportValidation rv : matchingValidations) {
+            if (rv.getResponsibleDepartment() != null) {
+                requiredDepartmentIds.add(rv.getResponsibleDepartment().getId());
+            }
+        }
+
+        // ✅ 3. Check assigned users cover all required departments
         Map<Integer, Integer> departmentToUserMap = new HashMap<>();
         for (UserAssignmentDTO ua : request.getAssignedUsers()) {
             departmentToUserMap.put(ua.getDepartmentId(), (int) ua.getUserId());
@@ -65,6 +85,7 @@ public class ReportController {
             return ResponseEntity.badRequest().body("A user must be assigned for each required department.");
         }
 
+        // ✅ 4. Create and save the report
         Report report = new Report();
         report.setProtocol(protocol);
         report.setCreatedBy(currentUser);
@@ -87,6 +108,7 @@ public class ReportController {
 
         Report savedReport = reportRepository.save(report);
 
+        // ✅ 5. Save standard entries
         for (StandardControlCriteria sc : allStandardCriteria) {
             StandardReportEntry entry = new StandardReportEntry();
             entry.setReport(savedReport);
@@ -100,6 +122,7 @@ public class ReportController {
             standardReportEntryRepository.save(entry);
         }
 
+        // ✅ 6. Save specific entries
         for (SpecificControlCriteria spc : protocol.getSpecificControlCriteria()) {
             SpecificReportEntry entry = new SpecificReportEntry();
             entry.setReport(savedReport);
@@ -113,14 +136,37 @@ public class ReportController {
             specificReportEntryRepository.save(entry);
         }
 
+        // ✅ 7. Create and save maintenance form
         MaintenanceForm form = new MaintenanceForm();
         form.setReport(savedReport);
         maintenanceFormRepository.save(form);
+
+        // ✅ 8. Save validation entries based on assigned department
+
+        for (ReportValidation rv : matchingValidations) {
+            ValidationEntry ve = new ValidationEntry();
+            ve.setReport(savedReport);
+            ve.setReportValidation(rv);
+            ve.setStatus(null);
+            ve.setReason(null);
+            ve.setDate(null);
+            ve.setUpdated(false);
+
+            validationEntryRepository.save(ve);
+
+            System.out.println("✅ Created ValidationEntry for ReportValidation ID: " + rv.getId());
+        }
+
+
 
         Map<String, String> response = new HashMap<>();
         response.put("message", "Report created successfully.");
         return ResponseEntity.ok(response);
     }
+
+
+
+
 
     private ReportDTO mapToDTO(Report report) {
         Set<AssignedUserDTO> assignedUserDTOs = report.getAssignedUsers().stream()
@@ -151,8 +197,51 @@ public class ReportController {
         );
     }
 
+    @GetMapping("/validation-checklist/{reportId}")
+    public ResponseEntity<?> getValidationChecklist(@PathVariable Long reportId) {
+        Optional<Report> optionalReport = reportRepository.findById(Math.toIntExact(reportId));
+        if (optionalReport.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Report not found.");
+        }
 
+        List<ValidationEntry> entries = validationEntryRepository.findByReportId(reportId);
+        List<ValidationChecklistItemDTO> checklist = entries.stream()
+                .map(ValidationChecklistItemDTO::new)
+                .collect(Collectors.toList());
 
+        return ResponseEntity.ok(checklist);
+    }
+
+    @PutMapping("/validation-entry/{entryId}")
+    public ResponseEntity<?> updateValidationEntry(
+            @PathVariable Long entryId,
+            @RequestBody ValidationEntryUpdateDTO dto,
+            @AuthenticationPrincipal User user) {
+
+        Optional<ValidationEntry> optionalEntry = validationEntryRepository.findById(entryId);
+        if (optionalEntry.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        ValidationEntry entry = optionalEntry.get();
+
+        // ✅ Optional: Check department access if needed
+        // if (!entry.getReportValidation().getResponsibleDepartment().getId().equals(user.getDepartment().getId())) {
+        //     return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized");
+        // }
+
+        entry.setStatus(dto.getStatus());
+        entry.setReason(dto.getReason());
+        entry.setDate(dto.getDate());
+        // ✅ Assuming your dto.date is a string like '2025-04-24'
+        entry.setUpdated(true);
+
+        validationEntryRepository.save(entry);  // ✅ THIS IS CRUCIAL
+        Map<String, String> res = new HashMap<>();
+        res.put("message", "Validation entry updated successfully.");
+        return ResponseEntity.ok(res);
+
+    }
 
 
     @GetMapping("/my-created")
@@ -181,6 +270,7 @@ public class ReportController {
         List<StandardChecklistItemDTO> checklist = standardReportEntryService.getChecklistForUser((long) reportId, user);
         return ResponseEntity.ok(checklist);
     }
+
 
 
     @GetMapping("/specific-checklist/{reportId}")
