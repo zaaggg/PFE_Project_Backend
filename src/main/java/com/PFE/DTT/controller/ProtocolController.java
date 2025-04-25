@@ -1,10 +1,11 @@
 package com.PFE.DTT.controller;
 
+import com.PFE.DTT.dto.ProtocolCreationRequest;
 import com.PFE.DTT.dto.ProtocolDTO;
-import com.PFE.DTT.model.Protocol;
-import com.PFE.DTT.model.ProtocolType;
-import com.PFE.DTT.model.User;
+import com.PFE.DTT.dto.SpecificCriteriaDTO;
+import com.PFE.DTT.model.*;
 import com.PFE.DTT.repository.ProtocolRepository;
+import com.PFE.DTT.repository.SpecificControlCriteriaRepository;
 import com.PFE.DTT.repository.UserRepository;
 import com.PFE.DTT.security.JwtUtil; // ✅ Utility class to extract user ID from token
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,9 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -27,6 +26,7 @@ public class ProtocolController {
     @Autowired
     private ProtocolRepository protocolRepository;
 
+    @Autowired private SpecificControlCriteriaRepository specificControlCriteriaRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -50,46 +50,39 @@ public class ProtocolController {
         return ResponseEntity.ok(grouped);
     }
 
-
-
-    // ✅ Create a new Protocol (Only Admins)
     @PostMapping("/create")
-    public ResponseEntity<?> createProtocol(
-            @RequestBody ProtocolRequest requestBody,
-            HttpServletRequest request) {
-
-        String token = request.getHeader("Authorization");
-        if (token == null || !token.startsWith("Bearer ")) {
-            return ResponseEntity.status(401).body("Unauthorized: Missing or invalid token.");
+    public ResponseEntity<?> createProtocol(@RequestBody ProtocolCreationRequest request,
+                                            @AuthenticationPrincipal User currentUser) {
+        if (currentUser.getRole() != User.Role.ADMIN) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only admins can create protocols.");
         }
 
-        int userId = jwtUtil.extractUserId(token.substring(7));
-        Optional<User> user = userRepository.findById((long) userId);
-        if (user.isEmpty() || user.get().getRole() != User.Role.ADMIN) {
-            return ResponseEntity.status(403).body("Only admins can create protocols.");
+        Protocol protocol = new Protocol();
+        protocol.setName(request.getName());
+        protocol.setProtocolType(request.getProtocolType());
+        protocol.setCreatedBy(currentUser); // ✅ THIS LINE IS REQUIRED
+
+        Protocol savedProtocol = protocolRepository.save(protocol);
+
+        for (SpecificCriteriaDTO dto : request.getSpecificCriteria()) {
+            SpecificControlCriteria criteria = new SpecificControlCriteria();
+            criteria.setDescription(dto.getDescription());
+            criteria.setProtocol(protocol);
+
+            criteria.setImplementationResponsibles(new HashSet<>(dto.getImplementationResponsibles()));
+            criteria.setCheckResponsibles(new HashSet<>(dto.getCheckResponsibles()));
+
+            specificControlCriteriaRepository.save(criteria);
         }
 
-        ProtocolType protocolType;
-        try {
-            protocolType = ProtocolType.valueOf(requestBody.getProtocolType().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Invalid protocol type. Allowed values: HOMOLOGATION, REQUALIFICATION.");
-        }
 
-        Protocol protocol = new Protocol(requestBody.getName(), protocolType, user.get());
-        protocolRepository.save(protocol);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Protocol created successfully.");
+        return ResponseEntity.ok(response);
 
-        return ResponseEntity.ok("Protocol created successfully.");
     }
 
-    static class ProtocolRequest {
-        private String name;
-        private String protocolType;
 
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
 
-        public String getProtocolType() { return protocolType; }
-        public void setProtocolType(String protocolType) { this.protocolType = protocolType; }
-    }
+
 }
