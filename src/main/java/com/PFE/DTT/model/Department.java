@@ -2,7 +2,6 @@ package com.PFE.DTT.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import java.util.Objects;
 
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})

@@ -82,4 +82,14 @@ public class SpecificReportEntryService {
         repository.save(entry);
         return "OK";
     }
+
+    public Integer getReportIdByEntryId(int entryId) {
+        return repository.findById(entryId)
+                .map(entry -> entry.getReport().getId())
+                .orElse(null);
+    }
+
+
+
+
 }

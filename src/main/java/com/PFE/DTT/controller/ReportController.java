@@ -3,6 +3,7 @@ package com.PFE.DTT.controller;
 import com.PFE.DTT.dto.*;
 import com.PFE.DTT.model.*;
 import com.PFE.DTT.repository.*;
+import com.PFE.DTT.service.ReportService;
 import com.PFE.DTT.service.SpecificReportEntryService;
 import com.PFE.DTT.service.StandardReportEntryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,50 @@ public class ReportController {
     @Autowired private SpecificReportEntryService specificReportEntryService;
     @Autowired ReportValidationRepository reportValidationRepository;
     @Autowired ValidationEntryRepository validationEntryRepository;
+    @Autowired
+    private ReportService reportService;
+
+
+
+    @GetMapping("/required-users/{protocolId}")
+    public ResponseEntity<List<UserDTO>> getRequiredUsersForProtocol(@PathVariable Long protocolId) {
+        Optional<Protocol> optionalProtocol = protocolRepository.findById(Math.toIntExact(protocolId));
+        if (optionalProtocol.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        Protocol protocol = optionalProtocol.get();
+
+        Set<Long> departmentIds = new HashSet<>();
+
+        // 1. Standard Control Criteria
+        List<StandardControlCriteria> standards = standardControlCriteriaRepository.findAll();
+        for (StandardControlCriteria sc : standards) {
+            departmentIds.add(Long.valueOf(sc.getCheckResponsible().getId()));
+            departmentIds.add(Long.valueOf(sc.getImplementationResponsible().getId()));
+        }
+
+        // 2. Specific Control Criteria (only related to selected protocol)
+        for (SpecificControlCriteria spc : protocol.getSpecificControlCriteria()) {
+            spc.getImplementationResponsibles().forEach(dep -> departmentIds.add(Long.valueOf(dep.getId())));
+            spc.getCheckResponsibles().forEach(dep -> departmentIds.add(Long.valueOf(dep.getId())));
+        }
+
+        // 3. Report Validations with same protocol type
+        List<ReportValidation> validations = reportValidationRepository.findByProtocolType(protocol.getProtocolType());
+        for (ReportValidation rv : validations) {
+            if (rv.getResponsibleDepartment() != null) {
+                departmentIds.add(Long.valueOf(rv.getResponsibleDepartment().getId()));
+            }
+        }
+
+        // 4. Fetch users in those departments
+        List<User> users = userRepository.findByDepartmentIdIn(departmentIds);
+        List<UserDTO> userDTOs = users.stream().map(UserDTO::fromEntity).collect(Collectors.toList());
+
+        return ResponseEntity.ok(userDTOs);
+    }
+
 
 
 
@@ -236,9 +281,11 @@ public class ReportController {
         // ✅ Assuming your dto.date is a string like '2025-04-24'
         entry.setUpdated(true);
 
-        validationEntryRepository.save(entry);  // ✅ THIS IS CRUCIAL
+        validationEntryRepository.save(entry);
+        reportService.updateReportCompletionStatus(Long.valueOf(entry.getReport().getId()));// ✅ THIS IS CRUCIAL
         Map<String, String> res = new HashMap<>();
         res.put("message", "Validation entry updated successfully.");
+
         return ResponseEntity.ok(res);
 
     }
@@ -291,12 +338,17 @@ public class ReportController {
                 errorResponse.put("error", "Failed to update entry ID " + dto.getId() + ": " + result);
                 return ResponseEntity.badRequest().body(errorResponse);
             }
+            Long reportId = Long.valueOf(standardReportEntryService.getReportIdByEntryId(dto.getId()));
+            reportService.updateReportCompletionStatus(reportId);// ✅ THIS IS CRUCIAL
         }
 
         Map<String, String> successResponse = new HashMap<>();
         successResponse.put("message", "Selected standard entries updated successfully");
+
+
         return ResponseEntity.ok(successResponse);
     }
+
 
 
 
@@ -310,9 +362,12 @@ public class ReportController {
             if (!"OK".equals(result)) {
                 return ResponseEntity.badRequest().body("Failed to update entry ID " + dto.getId() + ": " + result);
             }
+            Long reportId = Long.valueOf(standardReportEntryService.getReportIdByEntryId(dto.getId()));
+            reportService.updateReportCompletionStatus(reportId);
         }
         return ResponseEntity.ok(Map.of("message", "Selected specific entries updated successfully"));
     }
+
 
 
 
@@ -398,7 +453,7 @@ public class ReportController {
 
             form.setMaintenanceSystemUpdated(true);
             maintenanceFormRepository.save(form);
-
+            reportService.updateReportCompletionStatus(Long.valueOf(form.getReport().getId()));
             return ResponseEntity.ok(Map.of("message", "Maintenance system part updated"));
         }
 
@@ -419,7 +474,7 @@ public class ReportController {
             form.setIsInOrder(updatedForm.getIsInOrder());
             form.setSheUpdated(true);
             maintenanceFormRepository.save(form);
-
+            reportService.updateReportCompletionStatus(Long.valueOf(form.getReport().getId()));
             return ResponseEntity.ok(Map.of("message", "SHE part updated"));
         }
 
