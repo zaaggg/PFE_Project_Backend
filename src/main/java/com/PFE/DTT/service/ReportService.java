@@ -1,6 +1,8 @@
 package com.PFE.DTT.service;
 
+import com.PFE.DTT.dto.ReportMetadataDTO;
 import com.PFE.DTT.model.Report;
+import com.PFE.DTT.model.User;
 import com.PFE.DTT.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -48,5 +50,22 @@ public class ReportService {
             report.setIsCompleted(isCompleted);
             reportRepository.save(report);
         });
+    }
+
+    public ReportMetadataDTO toMetadataDTO(Report report, User currentUser) {
+        boolean canEdit = (report.getImmobilization() == null || report.getImmobilization().isEmpty())
+                && report.getCreatedBy().getId() == currentUser.getId();
+
+        return new ReportMetadataDTO(
+                report.getType(),
+                report.getSerialNumber(),
+                report.getEquipmentDescription(),
+                report.getDesignation(),
+                report.getManufacturer(),
+                report.getImmobilization(),
+                report.getServiceSeg(),
+                report.getBusinessUnit(),
+                canEdit
+        );
     }
 }

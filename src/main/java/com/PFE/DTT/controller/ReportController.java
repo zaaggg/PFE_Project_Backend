@@ -209,6 +209,43 @@ public class ReportController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/metadata/{reportId}")
+    public ResponseEntity<ReportMetadataDTO> getReportMetadata(@PathVariable Long reportId,
+                                                               @AuthenticationPrincipal User currentUser) {
+        Report report = reportRepository.findById(Math.toIntExact(reportId))
+                .orElseThrow(() -> new RuntimeException("Report not found"));
+
+        ReportMetadataDTO dto = reportService.toMetadataDTO(report, currentUser);
+        return ResponseEntity.ok(dto);
+    }
+
+
+    @PutMapping("/rapports/update-immobilization/{reportId}")
+    public ResponseEntity<?> updateImmobilization(@PathVariable int reportId,
+                                                  @RequestBody ImmobilizationUpdateDTO dto,
+                                                  @AuthenticationPrincipal User currentUser) {
+        Optional<Report> optionalReport = reportRepository.findById(reportId);
+        if (optionalReport.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Report not found.");
+        }
+
+        Report report = optionalReport.get();
+
+        // Only the creator can edit
+        if (!report.getCreatedBy().getId().equals(currentUser.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not the creator of this report.");
+        }
+
+        // Only if immobilization is empty
+        if (report.getImmobilization() != null && !report.getImmobilization().isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Immobilization has already been filled.");
+        }
+
+        report.setImmobilization(dto.getImmobilization());
+        reportRepository.save(report);
+
+        return ResponseEntity.ok("Immobilization updated successfully.");
+    }
 
 
 
@@ -286,7 +323,10 @@ public class ReportController {
         Map<String, String> res = new HashMap<>();
         res.put("message", "Validation entry updated successfully.");
 
-        return ResponseEntity.ok(res);
+        Map<String, String> successResponse = new HashMap<>();
+        successResponse.put("message", "Immobilization updated successfully.");
+        return ResponseEntity.ok(successResponse);
+
 
     }
 
@@ -395,12 +435,6 @@ public class ReportController {
 
         return ResponseEntity.ok(dto);
     }
-
-
-
-
-
-
 
     @PutMapping("/maintenance-form/update/{reportId}")
     public ResponseEntity<?> updateMaintenanceForm(

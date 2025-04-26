@@ -41,6 +41,8 @@ public class Report {
     private String equipmentDescription;
     private String designation;
     private String manufacturer;
+
+
     private String immobilization;
     private String serviceSeg;
     private String businessUnit;
