@@ -11,35 +11,62 @@ public class MaintenanceForm {
     private int id;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
     private ControlStandard controlStandard;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
     private CurrentType currentType;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
     private NetworkForm networkForm;
 
+    @Column(nullable = true)
     private String powerCircuit;
+
+    @Column(nullable = true)
     private String controlCircuit;
+
+    @Column(nullable = true)
     private String fuseValue;
 
-    @Column(nullable = false)
-    private Boolean hasTransformer = false;
+    @Column(nullable = true)
+    private Boolean hasTransformer ;
 
+    @Column(nullable = true)
     private String frequency;
+
+    @Column(nullable = true)
     private String phaseBalanceTest380v;
+
+    @Column(nullable = true)
     private String phaseBalanceTest210v;
+
+    @Column(nullable = true)
     private String insulationResistanceMotor;
+
+    @Column(nullable = true)
     private String insulationResistanceCable;
+
+    @Column(nullable = true)
     private String machineSizeHeight;
+
+    @Column(nullable = true)
     private String machineSizeLength;
+
+    @Column(nullable = true)
     private String machineSizeWidth;
 
-    @Column(nullable = false)
-    private Boolean isInOrder  = false;
+    @Column(nullable = true)
+    private Boolean isInOrder ;
+
+
 
     @Column(name = "maintenance_system_updated")
     private boolean maintenanceSystemUpdated = false;
+
+
 
     @Column(name = "she_updated")
     private boolean sheUpdated = false;

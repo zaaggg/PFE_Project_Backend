@@ -2,6 +2,7 @@ package com.PFE.DTT.dto;
 
 import com.PFE.DTT.model.Department;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public class SpecificChecklistItemDTO {
@@ -13,7 +14,7 @@ public class SpecificChecklistItemDTO {
     private Boolean homologation;
     private String action;
     private String responsableAction;
-    private String deadline;
+    private LocalDate deadline;
     private String successControl;
     private Boolean isUpdated;
     private Boolean editable; // ✅ NEW FIELD
@@ -41,8 +42,8 @@ public class SpecificChecklistItemDTO {
     public String getResponsableAction() { return responsableAction; }
     public void setResponsableAction(String responsableAction) { this.responsableAction = responsableAction; }
 
-    public String getDeadline() { return deadline; }
-    public void setDeadline(String deadline) { this.deadline = deadline; }
+    public LocalDate getDeadline() { return deadline; }
+    public void setDeadline(LocalDate deadline) { this.deadline = deadline; }
 
     public String getSuccessControl() { return successControl; }
     public void setSuccessControl(String successControl) { this.successControl = successControl; }

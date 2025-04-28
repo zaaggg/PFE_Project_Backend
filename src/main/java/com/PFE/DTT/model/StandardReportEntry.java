@@ -1,6 +1,8 @@
 package com.PFE.DTT.model;
 
 import jakarta.persistence.*;
+
+import java.time.LocalDate;
 import java.util.Objects;
 
 /**
@@ -15,7 +17,7 @@ public class StandardReportEntry {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Boolean implemented;
 
     @Column(nullable = true)
@@ -25,7 +27,7 @@ public class StandardReportEntry {
     private String responsableAction;
 
     @Column(nullable = true)
-    private String deadline;
+    private LocalDate deadline;
 
     @Column(nullable = true)
     private String successControl;
@@ -49,7 +51,7 @@ public class StandardReportEntry {
     public StandardReportEntry() {}
 
     // Constructor
-    public StandardReportEntry(Boolean implemented, String action, String responsableAction, String deadline, String successControl, Report report) {
+    public StandardReportEntry(Boolean implemented, String action, String responsableAction, LocalDate deadline, String successControl, Report report) {
         this.implemented = implemented;
         this.action = action;
         this.responsableAction = responsableAction;
@@ -93,11 +95,11 @@ public class StandardReportEntry {
         this.responsableAction = responsableAction;
     }
 
-    public String getDeadline() {
+    public LocalDate getDeadline() {
         return deadline;
     }
 
-    public void setDeadline(String deadline) {
+    public void setDeadline(LocalDate deadline) {
         this.deadline = deadline;
     }
 

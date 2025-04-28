@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,7 +19,7 @@ public class StandardChecklistItemDTO {
     private Boolean implemented;
     private String action;
     private String responsableAction;
-    private String deadline;
+    private LocalDate deadline;
     private String successControl;
     private Boolean isUpdated;
     private Boolean editable;
@@ -47,8 +49,8 @@ public class StandardChecklistItemDTO {
     public String getResponsableAction() { return responsableAction; }
     public void setResponsableAction(String responsableAction) { this.responsableAction = responsableAction; }
 
-    public String getDeadline() { return deadline; }
-    public void setDeadline(String deadline) { this.deadline = deadline; }
+    public LocalDate getDeadline() { return deadline; }
+    public void setDeadline(LocalDate deadline) { this.deadline = deadline; }
 
     public String getSuccessControl() { return successControl; }
     public void setSuccessControl(String successControl) { this.successControl = successControl; }

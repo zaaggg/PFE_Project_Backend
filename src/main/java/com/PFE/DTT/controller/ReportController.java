@@ -158,11 +158,11 @@ public class ReportController {
             StandardReportEntry entry = new StandardReportEntry();
             entry.setReport(savedReport);
             entry.setStandardControlCriteria(sc);
-            entry.setImplemented(false);
-            entry.setAction("");
-            entry.setResponsableAction("");
-            entry.setDeadline("");
-            entry.setSuccessControl("");
+            entry.setImplemented(null);
+            entry.setAction(null);
+            entry.setResponsableAction(null);
+            entry.setDeadline(null);
+            entry.setSuccessControl(null);
             entry.setUpdated(false);
             standardReportEntryRepository.save(entry);
         }
@@ -172,11 +172,11 @@ public class ReportController {
             SpecificReportEntry entry = new SpecificReportEntry();
             entry.setReport(savedReport);
             entry.setSpecificControlCriteria(spc);
-            entry.setHomologation(false);
-            entry.setAction("");
-            entry.setResponsableAction("");
-            entry.setDeadline("");
-            entry.setSuccessControl("");
+            entry.setHomologation(null);
+            entry.setAction(null);
+            entry.setResponsableAction(null);
+            entry.setDeadline(null);
+            entry.setSuccessControl(null);
             entry.setUpdated(false);
             specificReportEntryRepository.save(entry);
         }

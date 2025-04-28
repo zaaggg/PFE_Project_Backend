@@ -2,13 +2,15 @@ package com.PFE.DTT.dto;
 
 import com.PFE.DTT.model.SpecificReportEntry;
 
+import java.time.LocalDate;
+
 
 public class SpecificReportEntryDTO {
     private int id;
     private boolean homologation;
     private String action;
     private String responsableAction;
-    private String deadline;
+    private LocalDate deadline;
     private String successControl;
     private boolean isUpdated;
 
@@ -24,8 +26,8 @@ public class SpecificReportEntryDTO {
     public String getResponsableAction() { return responsableAction; }
     public void setResponsableAction(String responsableAction) { this.responsableAction = responsableAction; }
 
-    public String getDeadline() { return deadline; }
-    public void setDeadline(String deadline) { this.deadline = deadline; }
+    public LocalDate getDeadline() { return deadline; }
+    public void setDeadline(LocalDate deadline) { this.deadline = deadline; }
 
     public String getSuccessControl() { return successControl; }
     public void setSuccessControl(String successControl) { this.successControl = successControl; }
