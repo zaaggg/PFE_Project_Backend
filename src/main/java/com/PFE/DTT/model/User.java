@@ -24,6 +24,10 @@ public class User {
     @Column(nullable = false)
     private boolean isVerified;
 
+    @Column(name = "logged_in")
+    private Boolean loggedIn = false; // New field for online status
+
+
     @Column(name = "verification_code")
     private String verificationCode;
 
@@ -59,6 +63,14 @@ public class User {
 
     public void setReportsAssigned(Set<Report> reportsAssigned) {
         this.reportsAssigned = reportsAssigned;
+    }
+
+    public boolean isLoggedIn() {
+        return loggedIn;
+    }
+
+    public void setLoggedIn(boolean loggedIn) {
+        this.loggedIn = loggedIn;
     }
 
 

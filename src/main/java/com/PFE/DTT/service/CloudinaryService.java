@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -27,9 +28,21 @@ public class CloudinaryService {
     public String uploadProfilePhoto(MultipartFile photo) {
         try {
             Map uploadResult = cloudinary.uploader().upload(photo.getBytes(), ObjectUtils.emptyMap());
-            return (String) uploadResult.get("url");
+            return (String) uploadResult.get("secure_url"); // More secure URL
         } catch (IOException e) {
             throw new RuntimeException("Failed to upload profile photo", e);
+        }
+    }
+
+    public String uploadChatPhoto(MultipartFile photo) {
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("folder", "chat_photos"); // 📂 Save inside 'chat_photos' folder in Cloudinary
+
+            Map uploadResult = cloudinary.uploader().upload(photo.getBytes(), params);
+            return (String) uploadResult.get("secure_url");
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload chat photo", e);
         }
     }
 }

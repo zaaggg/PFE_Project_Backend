@@ -1,6 +1,7 @@
 package com.PFE.DTT.controller;
 
 import com.PFE.DTT.model.User;
+import com.PFE.DTT.repository.UserRepository;
 import com.PFE.DTT.service.AuthService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -19,6 +21,8 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+    @Autowired private UserRepository userRepository;
+
 
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> register(@RequestBody User user) {
@@ -45,8 +49,21 @@ public class AuthController {
         logger.info("Received login request for email: {}", loginRequest.getEmail());
 
         try {
+            // Try login first
             String token = authService.login(loginRequest.getEmail(), loginRequest.getPassword());
             logger.info("Login successful for email: {}", loginRequest.getEmail());
+
+            // After login success -> update loggedIn field
+            Optional<User> userOptional = userRepository.findByEmail(loginRequest.getEmail());
+            if (userOptional.isPresent()) {
+                User user = userOptional.get();
+                user.setLoggedIn(true);
+                userRepository.save(user); // Save updated user
+                logger.info("User {} marked as logged in.", user.getEmail());
+            } else {
+                logger.warn("User {} not found after successful login.", loginRequest.getEmail());
+            }
+
             return ResponseEntity.ok(Map.of("token", token));
         } catch (RuntimeException e) {
             logger.error("Login failed for email: {}", loginRequest.getEmail(), e);
