@@ -244,7 +244,8 @@ public class ReportController {
         report.setImmobilization(dto.getImmobilization());
         reportRepository.save(report);
 
-        return ResponseEntity.ok("Immobilization updated successfully.");
+        return ResponseEntity.ok(Map.of("message", "Immobilization updated successfully."));
+
     }
 
 
