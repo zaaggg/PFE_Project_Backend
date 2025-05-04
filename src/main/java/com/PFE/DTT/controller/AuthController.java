@@ -1,5 +1,6 @@
 package com.PFE.DTT.controller;
 
+import com.PFE.DTT.dto.PasswordUpdateRequest;
 import com.PFE.DTT.model.User;
 import com.PFE.DTT.repository.UserRepository;
 import com.PFE.DTT.service.AuthService;
@@ -84,7 +85,21 @@ public class AuthController {
         } catch (RuntimeException e) {
             return ResponseEntity.status(500).body(e.getMessage());
         }
+
+
     }
+
+    @PostMapping("/update-password")
+    public ResponseEntity<Map<String, String>> updatePassword(@RequestHeader("Authorization") String token,
+                                                              @RequestBody PasswordUpdateRequest request) {
+        try {
+            String message = authService.updatePassword(token, request.getOldPassword(), request.getNewPassword());
+            return ResponseEntity.ok(Map.of("message", message));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
 
     // Inner class for login request
     static class LoginRequest {

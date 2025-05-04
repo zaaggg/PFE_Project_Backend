@@ -46,10 +46,14 @@ public class PublicController {
     public ResponseEntity<List<User>> getAllNonAdminUsers() {
         List<User> users = userRepository.findByRoleNot(User.Role.ADMIN);
 
-        // Optionally, remove passwords and verification code before returning
         users.forEach(user -> {
             user.setPassword(null);
             user.setVerificationCode(null);
+
+            // Prevent null-pointer exception during serialization
+            if (user.getLoggedIn() == null) {
+                user.setLoggedIn(false);
+            }
         });
 
         return ResponseEntity.ok(users);

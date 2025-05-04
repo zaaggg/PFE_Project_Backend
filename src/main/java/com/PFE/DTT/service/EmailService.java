@@ -163,4 +163,23 @@ public class EmailService {
             throw e;
         }
     }
+
+    public void sendEmail(String to, String subject, String body) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(body, false); // plain text
+            helper.setFrom("zaagkhalyl@gmail.com");
+
+            mailSender.send(message);
+            logger.info("Plain email sent successfully to {}", to);
+        } catch (Exception e) {
+            logger.error("Failed to send plain email to {}: {}", to, e.getMessage(), e);
+            throw new RuntimeException("Failed to send email", e);
+        }
+    }
+
 }

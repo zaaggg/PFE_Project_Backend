@@ -121,4 +121,19 @@ public class AuthService {
         String token = jwtUtil.generateToken(user);
         return token;
     }
+
+    public String updatePassword(String token, String oldPassword, String newPassword) {
+        String email = getEmailFromToken(token);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new RuntimeException("Ancien mot de passe incorrect.");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        return "Mot de passe mis à jour avec succès.";
+    }
+
 }

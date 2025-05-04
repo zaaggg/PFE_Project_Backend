@@ -1,14 +1,17 @@
 package com.PFE.DTT.dto;
 
+import com.PFE.DTT.model.MessageStatus;
+
 public class ChatMessageDTO {
     private Long senderId;
     private Long receiverId;
     private String content;
-    private String timestamp; // date-time of sending
+    private String timestamp;
     private boolean seen;
-    private String imageUrl; // optional, for Cloudinary uploads
+    private String imageUrl;
+    private MessageStatus status;
+    private UserDTO sender; // ✅ Optional full sender info (for UI)
 
-    // Constructors
     public ChatMessageDTO() {}
 
     public ChatMessageDTO(Long senderId, Long receiverId, String content, String timestamp, boolean seen, String imageUrl) {
@@ -21,51 +24,27 @@ public class ChatMessageDTO {
     }
 
     // Getters and Setters
-    public Long getSenderId() {
-        return senderId;
-    }
+    public Long getSenderId() { return senderId; }
+    public void setSenderId(Long senderId) { this.senderId = senderId; }
 
-    public void setSenderId(Long senderId) {
-        this.senderId = senderId;
-    }
+    public Long getReceiverId() { return receiverId; }
+    public void setReceiverId(Long receiverId) { this.receiverId = receiverId; }
 
-    public Long getReceiverId() {
-        return receiverId;
-    }
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
 
-    public void setReceiverId(Long receiverId) {
-        this.receiverId = receiverId;
-    }
+    public String getTimestamp() { return timestamp; }
+    public void setTimestamp(String timestamp) { this.timestamp = timestamp; }
 
-    public String getContent() {
-        return content;
-    }
+    public boolean isSeen() { return seen; }
+    public void setSeen(boolean seen) { this.seen = seen; }
 
-    public void setContent(String content) {
-        this.content = content;
-    }
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
-    public String getTimestamp() {
-        return timestamp;
-    }
+    public MessageStatus getStatus() { return status; }
+    public void setStatus(MessageStatus status) { this.status = status; }
 
-    public void setTimestamp(String timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public boolean isSeen() {
-        return seen;
-    }
-
-    public void setSeen(boolean seen) {
-        this.seen = seen;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
+    public UserDTO getSender() { return sender; }
+    public void setSender(UserDTO sender) { this.sender = sender; }
 }

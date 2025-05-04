@@ -233,4 +233,12 @@ public class User {
     public int hashCode() {
         return Objects.hash(id, email, password, role, isVerified, verificationCode, profilePhoto, phoneNumber, firstName, lastName, department, plant);
     }
+
+    public Boolean getLoggedIn() {
+        return loggedIn;
+    }
+
+    public void setLoggedIn(Boolean loggedIn) {
+        this.loggedIn = loggedIn;
+    }
 }

@@ -38,20 +38,33 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/public/**").permitAll()
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/api/public/**",
+                                "/ws-chat/**",    // WebSocket handshake endpoint
+                                "/ws/**",         // SockJS fallback endpoints
+                                "/error"          // Fallback for failed WebSocket handshakes
+                        ).permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
-                        /*   .requestMatchers("/api/rapports/create").hasAuthority("DEPARTMENT_MANAGER")
-
-                       /* .requestMatchers("/api/rapports/my-created").hasAuthority("DEPARTMENT_MANAGER")
-                         .requestMatchers("/api/rapports/assigned").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
-                          .requestMatchers("/api/rapports/maintenance-form/update/{reportId}").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
-                          .requestMatchers("/api/rapports/maintenance-form/{reportId}").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
-                          .requestMatchers("/api/rapports/specific-checklist/{reportId}").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
-                          .requestMatchers("/api/rapports/standard-checklist/{reportId}").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
-                          .requestMatchers("/api/rapports/entry/standard/{entryId}").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")
-                          .requestMatchers("/api/rapports/entry/specific/{entryId}").hasAnyRole("EMPLOYEE", "DEPARTMENT_MANAGER")*/
+                        .requestMatchers("/api/admin-users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin-plants/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin-departments/**").hasRole("ADMIN")
 
 
+
+                        // or your desired role
+                        // Uncomment and configure these as needed for fine-grained access control
+                        /*
+                        .requestMatchers("/api/rapports/create").hasAuthority("DEPARTMENT_MANAGER")
+                        .requestMatchers("/api/rapports/my-created").hasAuthority("DEPARTMENT_MANAGER")
+                        .requestMatchers("/api/rapports/assigned").hasAnyAuthority("EMPLOYEE", "DEPARTMENT_MANAGER")
+                        .requestMatchers("/api/rapports/maintenance-form/update/{reportId}").hasAnyAuthority("EMPLOYEE", "DEPARTMENT_MANAGER")
+                        .requestMatchers("/api/rapports/maintenance-form/{reportId}").hasAnyAuthority("EMPLOYEE", "DEPARTMENT_MANAGER")
+                        .requestMatchers("/api/rapports/specific-checklist/{reportId}").hasAnyAuthority("EMPLOYEE", "DEPARTMENT_MANAGER")
+                        .requestMatchers("/api/rapports/standard-checklist/{reportId}").hasAnyAuthority("EMPLOYEE", "DEPARTMENT_MANAGER")
+                        .requestMatchers("/api/rapports/entry/standard/{entryId}").hasAnyAuthority("EMPLOYEE", "DEPARTMENT_MANAGER")
+                        .requestMatchers("/api/rapports/entry/specific/{entryId}").hasAnyAuthority("EMPLOYEE", "DEPARTMENT_MANAGER")
+                        */
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -60,6 +73,7 @@ public class SecurityConfig {
 
         return http.build();
     }
+
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

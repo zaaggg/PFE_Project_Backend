@@ -13,6 +13,9 @@ public class UserDTO {
     private Department department;
     private Plant plant ;
 
+
+
+
     public static UserDTO fromEntity(User user) {
         UserDTO dto = new UserDTO();
         dto.setId(user.getId());
