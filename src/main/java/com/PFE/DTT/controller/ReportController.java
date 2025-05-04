@@ -3,6 +3,7 @@ package com.PFE.DTT.controller;
 import com.PFE.DTT.dto.*;
 import com.PFE.DTT.model.*;
 import com.PFE.DTT.repository.*;
+import com.PFE.DTT.service.EmailService;
 import com.PFE.DTT.service.ReportService;
 import com.PFE.DTT.service.SpecificReportEntryService;
 import com.PFE.DTT.service.StandardReportEntryService;
@@ -36,6 +37,9 @@ public class ReportController {
     @Autowired ValidationEntryRepository validationEntryRepository;
     @Autowired
     private ReportService reportService;
+    @Autowired
+    private EmailService emailService;
+
 
 
 
@@ -200,6 +204,22 @@ public class ReportController {
             validationEntryRepository.save(ve);
 
             System.out.println("✅ Created ValidationEntry for ReportValidation ID: " + rv.getId());
+        }
+
+        // ✅ 9. Notify assigned users by email
+// Notify assigned users
+        for (User assignedUser : report.getAssignedUsers()) {
+            String email = assignedUser.getEmail();
+            String protocolName = report.getProtocol().getName();
+            String protocolType = String.valueOf(report.getProtocol().getProtocolType());
+            String createdByFirstName = report.getCreatedBy().getFirstName();
+            String createdByLastName = report.getCreatedBy().getLastName();
+
+            // or report.getType() or any other label
+            String createdByName = report.getCreatedBy().getFirstName() + " " + report.getCreatedBy().getLastName();
+
+            emailService.sendReportCreationEmail(email, protocolName, protocolType, createdByFirstName , createdByLastName);
+            System.out.println("Sending email to " + assignedUser.getEmail());
         }
 
 
@@ -517,5 +537,10 @@ public class ReportController {
     }
 
 
+    @GetMapping("/test-mail")
+    public ResponseEntity<?> testMail() {
+        emailService.sendReportCreationEmail("zaagkhalyl@gmail.com", "Test Protocol", "Homologation", "John", "Doe");
+        return ResponseEntity.ok("Test email sent");
+    }
 
 }

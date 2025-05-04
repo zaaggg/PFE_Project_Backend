@@ -49,6 +49,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin-users/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin-plants/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin-departments/**").hasRole("ADMIN")
+                        .requestMatchers("/api/rapports/test-mail").permitAll()
 
 
 

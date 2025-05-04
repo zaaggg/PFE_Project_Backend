@@ -1,6 +1,7 @@
 package com.PFE.DTT.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -181,5 +182,39 @@ public class EmailService {
             throw new RuntimeException("Failed to send email", e);
         }
     }
+
+    public void sendReportCreationEmail(String to, String protocolName, String protocolType,  String createdByFirstName , String createdByLastName ) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+
+            helper.setTo(to);
+            helper.setSubject("📝 Nouveau rapport assigné à vous");
+
+            String body = String.format(
+                    "Bonjour,\n\n" +
+                            "Un nouveau rapport intitulé de protocol %s de type %s a été créé par %s %s et vous a été assigné.\n" +
+                            "Merci de vérifier et de compléter votre partie dans les délais.\n\n" +
+                            "Cordialement,\n" ,
+                    protocolName,
+                    protocolType,
+                    createdByFirstName,
+                    createdByLastName
+
+            );
+
+            helper.setText(body, false); // Plain text
+            helper.setFrom("zaagkhalyl@gmail.com");
+
+            mailSender.send(message);
+            logger.info("Report creation email sent successfully to {}", to);
+        } catch (Exception e) {
+            logger.error("Failed to send report creation email to {}: {}", to, e.getMessage(), e);
+            throw new RuntimeException("Failed to send report creation email", e);
+        }
+    }
+
+
+
 
 }
