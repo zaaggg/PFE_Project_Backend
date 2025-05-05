@@ -340,12 +340,16 @@ public class ReportController {
         entry.setUpdated(true);
 
         validationEntryRepository.save(entry);
-        reportService.updateReportCompletionStatus(Long.valueOf(entry.getReport().getId()));// ✅ THIS IS CRUCIAL
-        Map<String, String> res = new HashMap<>();
-        res.put("message", "Validation entry updated successfully.");
 
+
+        reportService.updateReportCompletionStatus(Long.valueOf(entry.getReport().getId()));
+
+
+        // ✅ THIS IS CRUCIAL
         Map<String, String> successResponse = new HashMap<>();
-        successResponse.put("message", "Immobilization updated successfully.");
+        successResponse.put("message", "validation entries updated successfully");
+
+
         return ResponseEntity.ok(successResponse);
 
 
@@ -356,18 +360,33 @@ public class ReportController {
     public ResponseEntity<?> getReportsCreatedByMe(@AuthenticationPrincipal User user) {
         if (user == null) return ResponseEntity.status(401).body("User not authenticated");
         if (user.getRole() != User.Role.DEPARTMENT_MANAGER) return ResponseEntity.status(403).body("Unauthorized");
+
         List<Report> reports = reportRepository.findByCreatedBy(user.getId());
-        List<ReportDTO> reportDTOs = reports.stream().map(this::mapToDTO).collect(Collectors.toList());
+
+        List<ReportDTO> reportDTOs = reports.stream().map(report -> {
+            ReportDTO dto = mapToDTO(report);
+            dto.setProgress(reportService.calculateReportProgressPercentage(report)); // ✅ set progress
+            return dto;
+        }).collect(Collectors.toList());
+
         return ResponseEntity.ok(reportDTOs);
     }
 
     @GetMapping("/assigned")
     public ResponseEntity<?> getReportsAssignedToMe(@AuthenticationPrincipal User user) {
         if (user == null) return ResponseEntity.status(401).body("Unauthorized");
+
         List<Report> reports = reportRepository.findAssignedToUser(user.getId());
-        List<ReportDTO> reportDTOs = reports.stream().map(this::mapToDTO).collect(Collectors.toList());
+
+        List<ReportDTO> reportDTOs = reports.stream().map(report -> {
+            ReportDTO dto = mapToDTO(report);
+            dto.setProgress(reportService.calculateReportProgressPercentage(report)); // ✅ set progress
+            return dto;
+        }).collect(Collectors.toList());
+
         return ResponseEntity.ok(reportDTOs);
     }
+
 
 // ReportController.java (updated checklist GET APIs + maintenance form flags)
 

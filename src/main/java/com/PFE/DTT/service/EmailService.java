@@ -214,6 +214,36 @@ public class EmailService {
         }
     }
 
+    public void sendReportCompletedEmail(String to, String protocolName, String serialNumber,
+                                         String firstName, String lastName) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+
+            helper.setTo(to);
+            helper.setSubject("✅ Rapport complété : " + protocolName);
+
+            String body = String.format(
+                    "Bonjour %s %s,\n\n" +
+                            "Le rapport \"%s\" (N° série : %s) que vous avez créé est maintenant complété.\n\n" +
+                            "Vous pouvez le consulter dans votre tableau de bord.\n\n" +
+                            "Cordialement,\n" +
+                            "L’équipe DTT.",
+                    firstName, lastName, protocolName, serialNumber
+            );
+
+            helper.setText(body, false); // Plain text
+            helper.setFrom("zaagkhalyl@gmail.com");
+
+            mailSender.send(message);
+            logger.info("✅ Report completion email sent to {}", to);
+        } catch (Exception e) {
+            logger.error("❌ Failed to send report completion email to {}: {}", to, e.getMessage(), e);
+            throw new RuntimeException("Failed to send report completion email", e);
+        }
+    }
+
+
 
 
 

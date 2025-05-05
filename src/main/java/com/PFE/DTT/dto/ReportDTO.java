@@ -20,6 +20,7 @@ public class ReportDTO {
     private String businessUnit;
     private LocalDateTime createdAt;
     private User createdBy;
+    private int progress;
     private Set<AssignedUserDTO> assignedUsers;
 
     // Constructor
@@ -135,6 +136,14 @@ public class ReportDTO {
 
     public void setAssignedUsers(Set<AssignedUserDTO> assignedUsers) {
         this.assignedUsers = assignedUsers;
+    }
+
+    public int getProgress() {
+        return progress;
+    }
+
+    public void setProgress(int progress) {
+        this.progress = progress;
     }
 
 
