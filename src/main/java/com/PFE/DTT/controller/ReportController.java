@@ -321,39 +321,28 @@ public class ReportController {
             @RequestBody ValidationEntryUpdateDTO dto,
             @AuthenticationPrincipal User user) {
 
-        Optional<ValidationEntry> optionalEntry = validationEntryRepository.findById(entryId);
-        if (optionalEntry.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        return validationEntryRepository.findById(entryId).map(entry -> {
+            // ✅ Department-level authorization (optional but recommended)
+            Long responsibleDeptId = Long.valueOf(entry.getReportValidation().getResponsibleDepartment().getId());
+            if (!responsibleDeptId.equals(user.getDepartment().getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "You are not authorized to update this validation entry"));
+            }
 
-        ValidationEntry entry = optionalEntry.get();
+            entry.setStatus(dto.getStatus());
+            entry.setReason(dto.getReason());
+            entry.setDate(dto.getDate());
+            entry.setUpdated(true);
+            validationEntryRepository.save(entry);
 
-        // ✅ Optional: Check department access if needed
-        // if (!entry.getReportValidation().getResponsibleDepartment().getId().equals(user.getDepartment().getId())) {
-        //     return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized");
-        // }
+            // ✅ Trigger report status and email if needed
+            reportService.updateReportCompletionStatus(Long.valueOf(entry.getReport().getId()));
 
-        entry.setStatus(dto.getStatus());
-        entry.setReason(dto.getReason());
-        entry.setDate(dto.getDate());
-        // ✅ Assuming your dto.date is a string like '2025-04-24'
-        entry.setUpdated(true);
-
-        validationEntryRepository.save(entry);
-
-
-        reportService.updateReportCompletionStatus(Long.valueOf(entry.getReport().getId()));
-
-
-        // ✅ THIS IS CRUCIAL
-        Map<String, String> successResponse = new HashMap<>();
-        successResponse.put("message", "validation entries updated successfully");
-
-
-        return ResponseEntity.ok(successResponse);
-
-
+            return ResponseEntity.ok(Map.of("message", "Validation entry updated successfully"));
+        }).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", "Validation entry not found")));
     }
+
 
 
     @GetMapping("/my-created")
@@ -409,24 +398,38 @@ public class ReportController {
 
     // ✅ PUT - Update Standard Checklist Entry
     @PutMapping("/entry/standard/batch-update")
-    public ResponseEntity<Map<String, String>> updateMultipleStandardEntries(@RequestBody List<StandardReportEntryDTO> entries,
-                                                                             @AuthenticationPrincipal User user) {
-        for (StandardReportEntryDTO dto : entries) {
-            String result = standardReportEntryService.updateEntry(dto.getId(), dto, user);
-            if (!"OK".equals(result)) {
-                Map<String, String> errorResponse = new HashMap<>();
-                errorResponse.put("error", "Failed to update entry ID " + dto.getId() + ": " + result);
-                return ResponseEntity.badRequest().body(errorResponse);
-            }
-            Long reportId = Long.valueOf(standardReportEntryService.getReportIdByEntryId(dto.getId()));
-            reportService.updateReportCompletionStatus(reportId);// ✅ THIS IS CRUCIAL
+    public ResponseEntity<Map<String, String>> updateMultipleStandardEntries(
+            @RequestBody List<StandardReportEntryDTO> entries,
+            @AuthenticationPrincipal User user) {
+
+        Map<String, String> response = new HashMap<>();
+
+        if (entries == null || entries.isEmpty()) {
+            response.put("error", "No entries provided.");
+            return ResponseEntity.badRequest().body(response);
         }
 
-        Map<String, String> successResponse = new HashMap<>();
-        successResponse.put("message", "Selected standard entries updated successfully");
+        Set<Long> updatedReportIds = new HashSet<>();
 
+        for (StandardReportEntryDTO dto : entries) {
+            String result = standardReportEntryService.updateEntry(dto.getId(), dto, user);
 
-        return ResponseEntity.ok(successResponse);
+            if (!"OK".equals(result)) {
+                response.put("error", "Failed to update entry ID " + dto.getId() + ": " + result);
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            Long reportId = Long.valueOf(standardReportEntryService.getReportIdByEntryId(dto.getId()));
+            updatedReportIds.add(reportId);
+        }
+
+        // ✅ Now check completion status only once per report ID
+        for (Long reportId : updatedReportIds) {
+            reportService.updateReportCompletionStatus(reportId);
+        }
+
+        response.put("message", "Selected standard entries updated successfully.");
+        return ResponseEntity.ok(response);
     }
 
 
@@ -435,19 +438,34 @@ public class ReportController {
 
     // ✅ PUT - Update Specific Checklist Entry
     @PutMapping("/entry/specific/batch-update")
-    public ResponseEntity<?> updateMultipleSpecificEntries(@RequestBody List<SpecificReportEntryDTO> entries,
-                                                           @AuthenticationPrincipal User user) {
+    public ResponseEntity<?> updateMultipleSpecificEntries(
+            @RequestBody List<SpecificReportEntryDTO> entries,
+            @AuthenticationPrincipal User user) {
+
+        if (entries == null || entries.isEmpty()) {
+            return ResponseEntity.badRequest().body("No entries provided.");
+        }
+
+        Set<Long> updatedReportIds = new HashSet<>();
+
         for (SpecificReportEntryDTO dto : entries) {
             String result = specificReportEntryService.updateEntry(dto.getId(), dto, user);
+
             if (!"OK".equals(result)) {
                 return ResponseEntity.badRequest().body("Failed to update entry ID " + dto.getId() + ": " + result);
             }
-            Long reportId = Long.valueOf(standardReportEntryService.getReportIdByEntryId(dto.getId()));
+
+            Long reportId = Long.valueOf(specificReportEntryService.getReportIdByEntryId(dto.getId()));
+            updatedReportIds.add(reportId);
+        }
+
+        // ✅ Trigger completion check once per report
+        for (Long reportId : updatedReportIds) {
             reportService.updateReportCompletionStatus(reportId);
         }
+
         return ResponseEntity.ok(Map.of("message", "Selected specific entries updated successfully"));
     }
-
 
 
 
@@ -478,16 +496,16 @@ public class ReportController {
 
     @PutMapping("/maintenance-form/update/{reportId}")
     public ResponseEntity<?> updateMaintenanceForm(
-            @PathVariable int reportId,
+            @PathVariable Long reportId,
             @RequestBody MaintenanceForm updatedForm,
             @AuthenticationPrincipal User user) {
 
-        Optional<Report> reportOpt = reportRepository.findById(reportId);
+        Optional<Report> reportOpt = reportRepository.findById(Math.toIntExact(reportId));
         if (reportOpt.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Report not found"));
         }
 
-        Optional<MaintenanceForm> formOpt = maintenanceFormRepository.findByReportId(reportId);
+        Optional<MaintenanceForm> formOpt = maintenanceFormRepository.findByReportId(Math.toIntExact(reportId));
         if (formOpt.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Maintenance form not found"));
         }
@@ -499,16 +517,17 @@ public class ReportController {
         boolean isCreator = report.getCreatedBy().getId().equals(user.getId());
         String department = user.getDepartment().getName().trim().toLowerCase();
 
-        // MAINTENANCE SYSTEM
+        // ✅ MAINTENANCE SYSTEM
         if ("maintenance system".equals(department)) {
             if (!isAssigned && !isCreator) {
                 return ResponseEntity.status(403).body(Map.of("error", "Not allowed: Only assigned users or creator can update"));
             }
 
             if (Boolean.TRUE.equals(form.getMaintenanceSystemUpdated())) {
-                return ResponseEntity.status(403).body(Map.of("error", "Already filled by maintenance system"));
+                return ResponseEntity.status(403).body(Map.of("error", "Already filled by Maintenance System"));
             }
 
+            // Update fields
             form.setControlStandard(updatedForm.getControlStandard());
             form.setCurrentType(updatedForm.getCurrentType());
             form.setNetworkForm(updatedForm.getNetworkForm());
@@ -527,14 +546,15 @@ public class ReportController {
 
             form.setMaintenanceSystemUpdated(true);
             maintenanceFormRepository.save(form);
-            reportService.updateReportCompletionStatus(Long.valueOf(form.getReport().getId()));
+
+            reportService.updateReportCompletionStatus(reportId);
             return ResponseEntity.ok(Map.of("message", "Maintenance system part updated"));
         }
 
-        // SHE
+        // ✅ SHE
         if ("she".equals(department)) {
             if (!Boolean.TRUE.equals(form.getMaintenanceSystemUpdated())) {
-                return ResponseEntity.status(403).body(Map.of("error", "Maintenance system must complete their section first"));
+                return ResponseEntity.status(403).body(Map.of("error", "Maintenance System must complete their section first"));
             }
 
             if (!isAssigned && !isCreator) {
@@ -548,12 +568,14 @@ public class ReportController {
             form.setIsInOrder(updatedForm.getIsInOrder());
             form.setSheUpdated(true);
             maintenanceFormRepository.save(form);
-            reportService.updateReportCompletionStatus(Long.valueOf(form.getReport().getId()));
+
+            reportService.updateReportCompletionStatus(reportId);
             return ResponseEntity.ok(Map.of("message", "SHE part updated"));
         }
 
         return ResponseEntity.status(403).body(Map.of("error", "You are not authorized to update any part of the maintenance form"));
     }
+
 
 
     @GetMapping("/test-mail")

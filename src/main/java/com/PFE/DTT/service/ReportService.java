@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ReportService {
@@ -30,43 +31,31 @@ public class ReportService {
     private EmailService emailService;
 
     public void updateReportCompletionStatus(Long reportId) {
-        boolean allStandardUpdated = standardReportEntryRepository
-                .findByReportId(reportId)
-                .stream().allMatch(e -> Boolean.TRUE.equals(e.getIsUpdated()));
+        Optional<Report> optionalReport = reportRepository.findById(Math.toIntExact(reportId));
+        if (optionalReport.isEmpty()) return;
 
-        boolean allSpecificUpdated = specificReportEntryRepository
-                .findByReportId(reportId)
-                .stream().allMatch(e -> Boolean.TRUE.equals(e.isUpdated()));
+        Report report = optionalReport.get();
+        int progress = calculateReportProgressPercentage(report);
 
-        boolean maintenanceSystemDone = maintenanceFormRepository
-                .isMaintenanceSystemPartFilled(reportId);
-
-        boolean maintenanceSheDone = maintenanceFormRepository
-                .isShePartFilled(reportId);
-
-        boolean allValidationUpdated = validationEntryRepository
-                .findByReportId(reportId)
-                .stream().allMatch(e -> Boolean.TRUE.equals(e.getUpdated()));
-
-        boolean isCompleted = allStandardUpdated && allSpecificUpdated && maintenanceSystemDone && maintenanceSheDone && allValidationUpdated;
-
-        reportRepository.findById(Math.toIntExact(reportId)).ifPresent(report -> {
-            boolean wasAlreadyCompleted = report.isCompleted();
-
-            report.setIsCompleted(isCompleted);
+        if (progress == 100 && !report.isCompleted()) {
+            report.setIsCompleted(true);
             reportRepository.save(report);
 
-            if (!wasAlreadyCompleted && isCompleted) {
-                emailService.sendReportCompletedEmail(
-                        report.getCreatedBy().getEmail(),
-                        report.getProtocol().getName(),
-                        report.getSerialNumber(),
-                        report.getCreatedBy().getFirstName(),
-                        report.getCreatedBy().getLastName()
-                );
-            }
-        });
+            // ✅ Send email only once when completed
+            emailService.sendReportCompletedEmail(
+                    report.getCreatedBy().getEmail(),
+                    report.getProtocol().getName(),
+                    report.getSerialNumber(),
+                    report.getCreatedBy().getFirstName(),
+                    report.getCreatedBy().getLastName()
+            );
+        } else if (progress < 100 && report.isCompleted()) {
+            // Optional: reset status if something is later un-filled
+            report.setIsCompleted(false);
+            reportRepository.save(report);
+        }
     }
+
 
 
     public ReportMetadataDTO toMetadataDTO(Report report, User currentUser) {
