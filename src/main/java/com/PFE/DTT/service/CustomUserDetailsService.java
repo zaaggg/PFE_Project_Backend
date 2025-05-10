@@ -21,12 +21,12 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
-
-
+        // ✅ Use user ID as the principal name so Spring routes WebSocket messages correctly
         return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
+                String.valueOf(user.getId()),  // ✅ use ID here
                 user.getPassword(),
-                Collections.emptyList() // No roles added yet, modify as needed
+                Collections.emptyList()
         );
+
     }
 }

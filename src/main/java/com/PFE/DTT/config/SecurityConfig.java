@@ -1,4 +1,5 @@
 package com.PFE.DTT.config;
+
 import com.PFE.DTT.security.JwtAuthenticationFilter;
 import com.PFE.DTT.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
@@ -41,40 +42,25 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/api/public/**",
-                                "/ws-chat/**",    // WebSocket handshake endpoint
-                                "/ws/**",         // SockJS fallback endpoints
-                                "/error"          // Fallback for failed WebSocket handshakes
+                                "/api/rapports/test-mail",
+                                "/error",
+                                "/ws/info",
+                                "/ws/**"
                         ).permitAll()
+
+                        .requestMatchers("/ws/**").authenticated() // Require JWT for WebSocket handshake
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/admin-users/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin-plants/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin-departments/**").hasRole("ADMIN")
-                        .requestMatchers("/api/rapports/test-mail").permitAll()
-
-
-
-                        // or your desired role
-                        // Uncomment and configure these as needed for fine-grained access control
-                        /*
-                        .requestMatchers("/api/rapports/create").hasAuthority("DEPARTMENT_MANAGER")
-                        .requestMatchers("/api/rapports/my-created").hasAuthority("DEPARTMENT_MANAGER")
-                        .requestMatchers("/api/rapports/assigned").hasAnyAuthority("EMPLOYEE", "DEPARTMENT_MANAGER")
-                        .requestMatchers("/api/rapports/maintenance-form/update/{reportId}").hasAnyAuthority("EMPLOYEE", "DEPARTMENT_MANAGER")
-                        .requestMatchers("/api/rapports/maintenance-form/{reportId}").hasAnyAuthority("EMPLOYEE", "DEPARTMENT_MANAGER")
-                        .requestMatchers("/api/rapports/specific-checklist/{reportId}").hasAnyAuthority("EMPLOYEE", "DEPARTMENT_MANAGER")
-                        .requestMatchers("/api/rapports/standard-checklist/{reportId}").hasAnyAuthority("EMPLOYEE", "DEPARTMENT_MANAGER")
-                        .requestMatchers("/api/rapports/entry/standard/{entryId}").hasAnyAuthority("EMPLOYEE", "DEPARTMENT_MANAGER")
-                        .requestMatchers("/api/rapports/entry/specific/{entryId}").hasAnyAuthority("EMPLOYEE", "DEPARTMENT_MANAGER")
-                        */
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -83,6 +69,7 @@ public class SecurityConfig {
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
+        config.setExposedHeaders(List.of("Authorization"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

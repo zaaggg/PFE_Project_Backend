@@ -34,33 +34,59 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-
+        String requestURI = request.getRequestURI();
         String authHeader = request.getHeader("Authorization");
 
+        System.out.println("Processing JWT for " + requestURI + ": " + authHeader);
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            System.out.println("No valid JWT for " + requestURI);
             filterChain.doFilter(request, response);
             return;
         }
 
-        String jwt = authHeader.substring(7);
-        String email = jwtUtil.extractEmail(jwt);
+        try {
+            String jwt = authHeader.substring(7);
+            String email = jwtUtil.extractEmail(jwt);
 
-        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            User user = userRepository.findByEmail(email).orElse(null);
+            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                User user = userRepository.findByEmail(email).orElse(null);
 
-            if (user != null && !jwtUtil.isTokenExpired(jwt)) {
-                List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+                if (user == null) {
+                    System.out.println("User not found for email: " + email);
+                    filterChain.doFilter(request, response);
+                    return;
+                }
 
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        user, null, authorities
-                );
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                if (!jwtUtil.isTokenExpired(jwt)) {
+                    List<GrantedAuthority> authorities;
+                    try {
+                        authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+                    } catch (NullPointerException e) {
+                        System.out.println("Invalid user role for " + email + ": " + e.getMessage());
+                        authorities = Collections.emptyList();
+                    }
 
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            user, null, authorities
+                    );
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                    System.out.println("Authenticated user: " + email + " with role: " + authorities);
+                } else {
+                    System.out.println("JWT expired for " + email);
+                }
+            } else {
+                System.out.println("Invalid email or authentication already set for " + requestURI);
             }
+        } catch (Exception e) {
+            System.out.println("JWT authentication error for " + requestURI + ": " + e.getMessage());
+            // Optionally, set response status to 401 Unauthorized
+            // response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            // return;
         }
 
         filterChain.doFilter(request, response);
     }
 }
-

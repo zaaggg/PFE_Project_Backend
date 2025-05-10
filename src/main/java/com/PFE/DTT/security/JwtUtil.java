@@ -1,4 +1,3 @@
-// ✅ JwtUtil.java
 package com.PFE.DTT.security;
 
 import com.PFE.DTT.model.User;
@@ -21,11 +20,6 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private long expiration;
 
-    public int extractUserId(String token) {
-        Claims claims = extractClaims(token);
-        return Integer.parseInt(claims.get("userId").toString());
-    }
-
     public String generateToken(User user) {
         System.out.println("JWT secret used: " + secret);
 
@@ -39,7 +33,6 @@ public class JwtUtil {
         claims.put("phoneNumber", user.getPhoneNumber());
         claims.put("profilePhoto", user.getProfilePhoto());
 
-        // Embed department and plant names and ids
         if (user.getDepartment() != null) {
             claims.put("department", Map.of(
                     "id", user.getDepartment().getId(),
@@ -64,10 +57,8 @@ public class JwtUtil {
                 .compact();
     }
 
-
     public Claims extractClaims(String token) {
         System.out.println("JWT secret used: " + secret);
-
         return Jwts.parser()
                 .setSigningKey(secret.getBytes())
                 .parseClaimsJws(token)
@@ -84,5 +75,19 @@ public class JwtUtil {
 
     public boolean isTokenExpired(String token) {
         return extractClaims(token).getExpiration().before(new Date());
+    }
+
+    // ✅ Add this method to extract user ID
+    public Long extractUserId(String token) {
+        Claims claims = extractClaims(token);
+        Object userIdObj = claims.get("id");
+        if (userIdObj instanceof Integer) {
+            return ((Integer) userIdObj).longValue();
+        } else if (userIdObj instanceof Long) {
+            return (Long) userIdObj;
+        } else if (userIdObj instanceof String) {
+            return Long.parseLong((String) userIdObj);
+        }
+        throw new IllegalArgumentException("Invalid user ID in token");
     }
 }

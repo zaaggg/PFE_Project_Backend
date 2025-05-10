@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
+
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,9 +25,7 @@ public class ReportController {
     @Autowired private ProtocolRepository protocolRepository;
     @Autowired private ReportRepository reportRepository;
     @Autowired private UserRepository userRepository;
-    @Autowired private DepartmentRepository departmentRepository;
     @Autowired private StandardControlCriteriaRepository standardControlCriteriaRepository;
-    @Autowired private SpecificControlCriteriaRepository specificControlCriteriaRepository;
     @Autowired private StandardReportEntryRepository standardReportEntryRepository;
     @Autowired private SpecificReportEntryRepository specificReportEntryRepository;
     @Autowired private MaintenanceFormRepository maintenanceFormRepository;
@@ -57,21 +55,21 @@ public class ReportController {
         // 1. Standard Control Criteria
         List<StandardControlCriteria> standards = standardControlCriteriaRepository.findAll();
         for (StandardControlCriteria sc : standards) {
-            departmentIds.add(Long.valueOf(sc.getCheckResponsible().getId()));
-            departmentIds.add(Long.valueOf(sc.getImplementationResponsible().getId()));
+            departmentIds.add((long) sc.getCheckResponsible().getId());
+            departmentIds.add((long) sc.getImplementationResponsible().getId());
         }
 
         // 2. Specific Control Criteria (only related to selected protocol)
         for (SpecificControlCriteria spc : protocol.getSpecificControlCriteria()) {
-            spc.getImplementationResponsibles().forEach(dep -> departmentIds.add(Long.valueOf(dep.getId())));
-            spc.getCheckResponsibles().forEach(dep -> departmentIds.add(Long.valueOf(dep.getId())));
+            spc.getImplementationResponsibles().forEach(dep -> departmentIds.add((long) dep.getId()));
+            spc.getCheckResponsibles().forEach(dep -> departmentIds.add((long) dep.getId()));
         }
 
         // 3. Report Validations with same protocol type
         List<ReportValidation> validations = reportValidationRepository.findByProtocolType(protocol.getProtocolType());
         for (ReportValidation rv : validations) {
             if (rv.getResponsibleDepartment() != null) {
-                departmentIds.add(Long.valueOf(rv.getResponsibleDepartment().getId()));
+                departmentIds.add((long) rv.getResponsibleDepartment().getId());
             }
         }
 
@@ -216,7 +214,6 @@ public class ReportController {
             String createdByLastName = report.getCreatedBy().getLastName();
 
             // or report.getType() or any other label
-            String createdByName = report.getCreatedBy().getFirstName() + " " + report.getCreatedBy().getLastName();
 
             emailService.sendReportCreationEmail(email, protocolName, protocolType, createdByFirstName , createdByLastName);
             System.out.println("Sending email to " + assignedUser.getEmail());
@@ -261,7 +258,7 @@ public class ReportController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Immobilization has already been filled.");
         }
 
-        report.setImmobilization(dto.getImmobilization());
+
         reportRepository.save(report);
 
         return ResponseEntity.ok(Map.of("message", "Immobilization updated successfully."));
@@ -323,7 +320,7 @@ public class ReportController {
 
         return validationEntryRepository.findById(entryId).map(entry -> {
             // ✅ Department-level authorization (optional but recommended)
-            Long responsibleDeptId = Long.valueOf(entry.getReportValidation().getResponsibleDepartment().getId());
+            Long responsibleDeptId = (long) entry.getReportValidation().getResponsibleDepartment().getId();
             if (!responsibleDeptId.equals(user.getDepartment().getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("error", "You are not authorized to update this validation entry"));
@@ -336,7 +333,7 @@ public class ReportController {
             validationEntryRepository.save(entry);
 
             // ✅ Trigger report status and email if needed
-            reportService.updateReportCompletionStatus(Long.valueOf(entry.getReport().getId()));
+            reportService.updateReportCompletionStatus((long) entry.getReport().getId());
 
             return ResponseEntity.ok(Map.of("message", "Validation entry updated successfully"));
         }).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)

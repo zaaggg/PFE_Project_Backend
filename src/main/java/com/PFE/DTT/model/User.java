@@ -57,6 +57,8 @@ public class User {
     @ManyToMany(mappedBy = "assignedUsers")
     private Set<Report> reportsAssigned;
 
+
+
     public Set<Report> getReportsAssigned() {
         return reportsAssigned;
     }
