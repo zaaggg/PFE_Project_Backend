@@ -221,9 +221,11 @@ public class ReportController {
 
 
 
-        Map<String, String> response = new HashMap<>();
+        Map<String, Object> response = new HashMap<>();
         response.put("message", "Report created successfully.");
+        response.put("reportId", savedReport.getId());
         return ResponseEntity.ok(response);
+
     }
 
     @GetMapping("/metadata/{reportId}")
