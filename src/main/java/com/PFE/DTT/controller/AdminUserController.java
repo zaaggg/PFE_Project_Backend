@@ -110,7 +110,7 @@ public class AdminUserController {
             Use this password: %s
             """, newUser.getEmail(), rawPassword);
 
-        emailService.sendEmail(newUser.getEmail(), subject, body);
+        emailService.sendUserCreationEmail(newUser.getEmail(), subject, body);
 
         return ResponseEntity.ok(Map.of("message", "User added and email sent"));
     }
