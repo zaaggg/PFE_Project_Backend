@@ -320,26 +320,48 @@ public class ReportController {
             @RequestBody ValidationEntryUpdateDTO dto,
             @AuthenticationPrincipal User user) {
 
-        return validationEntryRepository.findById(entryId).map(entry -> {
-            // ✅ Department-level authorization (optional but recommended)
-            Long responsibleDeptId = (long) entry.getReportValidation().getResponsibleDepartment().getId();
-            if (!responsibleDeptId.equals(user.getDepartment().getId())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "You are not authorized to update this validation entry"));
-            }
+        // 🔍 Log debug information
+        System.out.println("🔄 Request to update ValidationEntry ID: " + entryId);
+        System.out.println("🔐 Authenticated user: " + user.getEmail());
+        System.out.println("📎 User department: " +
+                (user.getDepartment() != null ? user.getDepartment().getId() : "null"));
 
-            entry.setStatus(dto.getStatus());
-            entry.setReason(dto.getReason());
-            entry.setDate(dto.getDate());
-            entry.setUpdated(true);
-            validationEntryRepository.save(entry);
+        Optional<ValidationEntry> optionalEntry = validationEntryRepository.findById(entryId);
 
-            // ✅ Trigger report status and email if needed
-            reportService.updateReportCompletionStatus((long) entry.getReport().getId());
+        if (optionalEntry.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Validation entry not found"));
+        }
 
-            return ResponseEntity.ok(Map.of("message", "Validation entry updated successfully"));
-        }).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("error", "Validation entry not found")));
+        ValidationEntry entry = optionalEntry.get();
+
+        if (entry.getReportValidation() == null || entry.getReportValidation().getResponsibleDepartment() == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Validation entry is missing responsible department"));
+        }
+
+        int responsibleDeptId = entry.getReportValidation().getResponsibleDepartment().getId();
+        int userDeptId = user.getDepartment() != null ? user.getDepartment().getId() : null;
+
+        System.out.println("📎 Responsible Dept ID: " + responsibleDeptId);
+        System.out.println("📎 User Dept ID: " + userDeptId);
+
+        if ( !(responsibleDeptId == (userDeptId))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "You are not authorized to update this validation entry"));
+        }
+
+        // ✅ Proceed with update
+        entry.setStatus(dto.getStatus());
+        entry.setReason(dto.getReason());
+        entry.setDate(dto.getDate());
+        entry.setUpdated(true);
+        validationEntryRepository.save(entry);
+
+        // ✅ Re-check report completion
+        reportService.updateReportCompletionStatus(Long.valueOf(entry.getReport().getId()));
+
+        return ResponseEntity.ok(Map.of("message", "Validation entry updated successfully"));
     }
 
 
