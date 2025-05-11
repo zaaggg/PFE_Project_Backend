@@ -87,8 +87,8 @@ public class ReportController {
     public ResponseEntity<?> createReport(@RequestBody ReportCreationRequest request,
                                           @AuthenticationPrincipal User currentUser) {
 
-        if (currentUser.getRole() != User.Role.DEPARTMENT_MANAGER) {
-            return ResponseEntity.status(403).body("Only department managers can create reports.");
+        if (currentUser.getRole() != User.Role.DEPARTMENT_MANAGER && currentUser.getRole() != User.Role.ADMIN) {
+            return ResponseEntity.status(403).body("Only department managers or admin can create reports.");
         }
 
         Optional<Protocol> optionalProtocol = protocolRepository.findById(request.getProtocolId());

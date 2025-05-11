@@ -30,128 +30,141 @@ public class EmailService {
         helper.setFrom("zaagkhalyl@gmail.com");
 
         String htmlContent = """
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Email Verification</title>
-              <style>
-                body {
-                  font-family: Arial, sans-serif;
-                  background-color: #e8ecef;
-                  margin: 0;
-                  padding: 0;
-                }
-                .container {
-                  max-width: 600px;
-                  margin: 0 auto;
-                  background-color: #ffffff;
-                  border-radius: 0;
-                  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                }
-                .header {
-                  background-color: #003087;
-                  color: #ffffff;
-                  text-align: center;
-                  padding: 20px 0;
-                }
-                .header img {
-                  max-width: 150px;
-                  margin-bottom: 10px;
-                }
-                .header h1 {
-                  font-size: 24px;
-                  margin: 0;
-                  text-transform: uppercase;
-                }
-                .content {
-                  text-align: center;
-                  padding: 40px 20px;
-                }
-                .content p {
-                  color: #666666;
-                  font-size: 16px;
-                  line-height: 1.5;
-                  margin: 0 0 20px;
-                }
-                .button {
-                  display: inline-block;
-                  background-color: #ff6200;
-                  color: #ffffff;
-                  text-decoration: none;
-                  padding: 12px 30px;
-                  font-size: 16px;
-                  font-weight: bold;
-                  border-radius: 5px;
-                  text-transform: uppercase;
-                }
-                .signature {
-                  text-align: center;
-                  color: #333333;
-                  font-size: 16px;
-                  margin-top: 20px;
-                }
-                .contact {
-                  background-color: #f4f4f4;
-                  text-align: center;
-                  padding: 20px;
-                  color: #003087;
-                  font-size: 14px;
-                }
-                .contact p {
-                  margin: 5px 0;
-                }
-                .social-icons {
-                  margin: 10px 0;
-                }
-                .social-icons img {
-                  width: 24px;
-                  margin: 0 5px;
-                }
-                .footer {
-                  background-color: #003087;
-                  color: #ffffff;
-                  text-align: center;
-                  padding: 10px;
-                  font-size: 12px;
-                }
-              </style>
-            </head>
-            <body>
-            <div class="container">
-              <div class="header">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Leoni_AG_Logo.svg/2560px-Leoni_AG_Logo.svg.png" alt="Company Logo">
-                <h1>Thanks for Signing Up!</h1>
-                <h1>Verify Your E-mail Address</h1>
-              </div>
-              <div class="content">
-                <p>Hi,</p>
-                <p>You're almost ready to get started. Please click on the button below to verify your email address and enjoy exclusive cleaning services with us!</p>
-                <a href="#" class="button">VERIFICATION CODE %s</a>
-              </div>
-              <div class="signature">
-                <p>Thanks,</p>
-                <p>The Company Team</p>
-              </div>
-              <div class="contact">
-                <p><strong>Get in touch</strong></p>
-                <p>+11 113 323 4444</p>
-                <p>info@yourcompany.com</p>
-                <div class="social-icons">
-                  <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" width="24"></a>
-                  <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="24"></a>
-                  <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" width="24"></a>
-                  <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/3670/3670147.png" alt="YouTube" width="24"></a>
-                  <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/5968/5968534.png" alt="Email" width="24"></a>
-                </div>
-              </div>
-              <div class="footer">
-                <p>Copyright © Company. All Rights Reserved.</p>
-              </div>
-            </div>
-            </body>
-            </html>
+                <!DOCTYPE html>
+                               <html lang="en">
+                                 <head>
+                                   <meta charset="UTF-8" />
+                                   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                                   <title>Verify Email</title>
+                                   <style>
+                                     body {
+                                       margin: 0;
+                                       padding: 0;
+                                       font-family: 'Segoe UI', sans-serif;
+                                       background-color: #f6f6f6;
+                                       color: #000;
+                                     }
+                                     .container {
+                                       max-width: 600px;
+                                       margin: 0 auto;
+                                       background-color: #fff;
+                                     }
+                                     .logo {
+                                       text-align: center;
+                                       padding: 30px 0 0;
+                                     }
+                                     .logo img {
+                                       max-width: 180px;
+                                     }
+                                     .header {
+                                       background-color: #003399;
+                                       color: #fff;
+                                       text-align: center;
+                                       padding: 40px 10px 20px;
+                                     }
+                                     .header h2 {
+                                       margin: 0;
+                                       font-size: 24px;
+                                     }
+                                     .verify-code {
+                                       background-color: #ffffff;
+                                       text-align: center;
+                                       padding: 30px 10px 10px;
+                                     }
+                                     .verify-code p {
+                                       font-size: 18px;
+                                       font-weight: 500;
+                                       margin-bottom: 20px;
+                                     }
+                                     .verify-code-box {
+                                       display: inline-block;
+                                       padding: 20px 40px;
+                                       font-size: 32px;
+                                       font-weight: bold;
+                                       background-color: #f16c17;
+                                       color: #fff;
+                                       border-radius: 6px;
+                                       letter-spacing: 6px;
+                                       margin-top: 10px;
+                                     }
+                                     .content {
+                                       padding: 30px 20px;
+                                       text-align: center;
+                                       line-height: 1.8;
+                                       font-size: 17px;
+                                     }
+                                     .footer {
+                                       background-color: #e5eaf5;
+                                       text-align: center;
+                                       padding: 30px 20px;
+                                     }
+                                     .footer strong {
+                                       display: block;
+                                       color: #003399;
+                                       font-size: 18px;
+                                       margin-bottom: 10px;
+                                     }
+                                     .footer a {
+                                       color: #000;
+                                       text-decoration: none;
+                                     }
+                                     .bottom-bar {
+                                       background-color: #003399;
+                                       text-align: center;
+                                       padding: 10px;
+                                       color: #fff;
+                                       font-size: 14px;
+                                     }
+                                     .social-icons img {
+                                       width: 24px;
+                                       margin: 10px 8px 0;
+                                     }
+                                   </style>
+                                 </head>
+                                 <body>
+                                   <div class="container">
+                                     <div class="logo">
+                                       <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Leoni_AG_Logo.svg/2560px-Leoni_AG_Logo.svg.png" alt="Company Logo" />
+                                     </div>
+                
+                                     <div class="header">
+                                       <div>
+                                         <p>THANKS FOR SIGNING UP!</p>
+                                         <h2>Verify Your E-mail Address</h2>
+                                       </div>
+                                     </div>
+                
+                                     <div class="verify-code">
+                                       <p><strong>Use the code below to verify your email address:</strong></p>
+                                       <div class="verify-code-box">%s</div>
+                                     </div>
+                
+                                     <div class="content">
+                                       <p><strong>You're almost ready to get started.<br />
+                                       Enter the above verification code in the app to continue your registration.</strong></p>
+                                       <p>Thanks,<br />The Company Team</p>
+                                     </div>
+                
+                                     <div class="footer">
+                                       <strong>Get in touch</strong>
+                                       <p>+11 111 333 4444<br />
+                                       <a href="mailto:info@yourcompany.com">info@yourcompany.com</a></p>
+                                       <div class="social-icons">
+                                         <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" /></a>
+                                         <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/733/733561.png" alt="LinkedIn" /></a>
+                                         <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/733/733558.png" alt="Instagram" /></a>
+                                         <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/733/733646.png" alt="YouTube" /></a>
+                                         <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/732/732200.png" alt="Email" /></a>
+                                       </div>
+                                     </div>
+                
+                                     <div class="bottom-bar">
+                                       Copyrights &copy; Company All Rights Reserved
+                                     </div>
+                                   </div>
+                                 </body>
+                               </html>
+                
             """.formatted(verificationCode);
 
         helper.setText(htmlContent, true);

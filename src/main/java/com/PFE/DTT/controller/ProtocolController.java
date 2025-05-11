@@ -36,8 +36,8 @@ public class ProtocolController {
 
     @GetMapping("/grouped")
     public ResponseEntity<?> getProtocolsGroupedByType(@AuthenticationPrincipal User user) {
-        if (user.getRole() != User.Role.DEPARTMENT_MANAGER) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+        if (user.getRole() != User.Role.DEPARTMENT_MANAGER && user.getRole() != User.Role.ADMIN) {
+            return ResponseEntity.status(403).body("Only department managers or admin can create reports.");
         }
 
         List<ProtocolDTO> protocolDTOs = protocolRepository.findAll().stream()
