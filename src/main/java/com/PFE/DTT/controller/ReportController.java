@@ -394,6 +394,26 @@ public class ReportController {
         return ResponseEntity.ok(reportDTOs);
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllReportsForAdmin(@AuthenticationPrincipal User user) {
+        if (user == null)
+            return ResponseEntity.status(401).body("User not authenticated");
+
+        if (user.getRole() != User.Role.ADMIN)
+            return ResponseEntity.status(403).body("Unauthorized");
+
+        List<Report> reports = reportRepository.findAll();
+
+        List<ReportDTO> reportDTOs = reports.stream().map(report -> {
+            ReportDTO dto = mapToDTO(report);
+            dto.setProgress(reportService.calculateReportProgressPercentage(report)); // ✅ set progress
+            return dto;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(reportDTOs);
+    }
+
+
     @GetMapping("/assigned")
     public ResponseEntity<?> getReportsAssignedToMe(@AuthenticationPrincipal User user) {
         if (user == null) return ResponseEntity.status(401).body("Unauthorized");

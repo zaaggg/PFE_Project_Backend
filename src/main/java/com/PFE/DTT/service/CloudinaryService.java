@@ -34,15 +34,5 @@ public class CloudinaryService {
         }
     }
 
-    public String uploadChatPhoto(MultipartFile photo) {
-        try {
-            Map<String, Object> params = new HashMap<>();
-            params.put("folder", "chat_photos"); // 📂 Save inside 'chat_photos' folder in Cloudinary
 
-            Map uploadResult = cloudinary.uploader().upload(photo.getBytes(), params);
-            return (String) uploadResult.get("secure_url");
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to upload chat photo", e);
-        }
-    }
 }
