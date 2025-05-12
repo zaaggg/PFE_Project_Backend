@@ -365,6 +365,18 @@ public class ReportController {
     }
 
 
+    @GetMapping("/{reportId}/assigned-users")
+    public ResponseEntity<List<UserDTO>> getAssignedUsers(@PathVariable Long reportId) {
+        Report report = reportRepository.findById(Math.toIntExact(reportId))
+                .orElseThrow(() -> new RuntimeException("Report not found"));
+
+        List<UserDTO> assignedUsers = report.getAssignedUsers().stream()
+                .map(UserDTO::fromEntity)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(assignedUsers);
+    }
+
 
     @GetMapping("/my-created")
     public ResponseEntity<?> getReportsCreatedByMe(@AuthenticationPrincipal User user) {
